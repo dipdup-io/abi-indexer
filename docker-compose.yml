@@ -1,0 +1,37 @@
+version: "3.6"
+
+services:
+  indexer:
+    image: dipdup/abi-indexer:latest
+    build:
+        dockerfile: build/Indexer.Dockerfile
+        context: .
+    env_file:
+      - .env
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    depends_on:
+      - db
+    volumes:
+      - /etc/abi:/etc/abi
+
+  db:
+    image: postgres:14
+    restart: always
+    volumes:
+      - db:/var/lib/postgres/data
+    ports:
+      - 127.0.0.1:5432:5432
+    environment: 
+      - POSTGRES_USER=${POSTGRES_USER-dipdup}
+      - POSTGRES_DB=${POSTGRES_DB:-abi_indexer}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db:

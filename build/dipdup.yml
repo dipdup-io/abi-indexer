@@ -1,0 +1,30 @@
+version: 0.0.1
+
+log_level: ${LOG_LEVEL:-info}
+
+metadata:
+  source_type: ${METADATA_SOURCE_TYPE}
+  threads_count: ${METADATA_THREADS_COUNT:-10}
+  
+  vm:
+    type: ${VM_TYPE:-evm}
+
+  sourcify:
+    base_url: ${SOURCIFY_BASE_URL}
+    timeout: ${SOURCIFY_TIMEOUT:-10}
+    chain_id: ${SOURCIFY_CHAIN_ID:-1}
+
+  fs:
+    dir: ${FS_DIR:-/etc/metadata}
+
+grpc:
+  server:
+    bind: ${GRPC_BIND:-127.0.0.1:7777}
+
+database:
+  kind: postgres
+  host: ${POSTGRES_HOST:-db}
+  port: ${POSTGRES_PORT:-5432}
+  user: ${POSTGRES_USER:-dipdup}
+  password: ${POSTGRES_PASSWORD:-changeme}
+  database: ${POSTGRES_DB:-abi_indexer}

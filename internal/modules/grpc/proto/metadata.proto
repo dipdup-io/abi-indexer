@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "modules/grpc/pb";
+
+import "internal/modules/grpc/proto/general.proto";
+
+service MetadataService {
+    rpc SubscribeOnMetadata(DefaultRequest) returns (stream Metadata);
+    rpc UnsubscribeFromMetadata(DefaultRequest) returns (Message);
+
+    rpc GetMetadata(GetMetadataRequest) returns (Metadata);
+    rpc ListMetadata(ListMetadataRequest) returns (ListMetadataResponse);
+}
+
+message GetMetadataRequest {
+    string id = 1;
+    string address = 2;
+}
+
+message ListMetadataRequest {
+    string id = 1;
+    string address = 2;
+    Page page = 3;
+}
+
+message ListMetadataResponse {
+    repeated Metadata metadata = 1;
+}
+
+message Metadata {
+    string address = 1;
+    bytes metadata = 2;
+    bytes json_schema = 3;
+}
