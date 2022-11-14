@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/dipdup-net/abi-indexer/internal/messages"
-	"github.com/dipdup-net/abi-indexer/internal/modules/grpc/pb"
-	"github.com/dipdup-net/abi-indexer/internal/modules/grpc/subscriptions"
 	"github.com/dipdup-net/abi-indexer/internal/storage"
 	"github.com/dipdup-net/abi-indexer/internal/storage/postgres"
+	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb"
+	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/subscriptions"
 	"github.com/rs/zerolog/log"
 	gogrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"

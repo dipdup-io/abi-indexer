@@ -13,6 +13,8 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
     depends_on:
       - db
+    ports:
+      - 127.0.0.1:7778:7778
     volumes:
       - /etc/abi:/etc/abi
 

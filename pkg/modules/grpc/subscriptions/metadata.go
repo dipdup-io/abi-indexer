@@ -1,8 +1,8 @@
 package subscriptions
 
 import (
-	"github.com/dipdup-net/abi-indexer/internal/modules/grpc/pb"
 	"github.com/dipdup-net/abi-indexer/internal/storage"
+	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb"
 )
 
 // Head -

@@ -3,6 +3,7 @@ package metadata
 import (
 	"context"
 
+	"github.com/dipdup-net/abi-indexer/internal/messages"
 	"github.com/dipdup-net/abi-indexer/internal/sources"
 	"github.com/dipdup-net/abi-indexer/internal/storage"
 	"github.com/dipdup-net/abi-indexer/internal/storage/postgres"
@@ -14,9 +15,10 @@ import (
 
 // Metadata -
 type Metadata struct {
-	storage postgres.Storage
-	source  sources.Source
-	vmType  vm.Type
+	publisher *messages.Publisher
+	storage   postgres.Storage
+	source    sources.Source
+	vmType    vm.Type
 
 	pool *workerpool.TimedPool[string]
 }
@@ -36,9 +38,10 @@ func NewMetadata(cfg Config, pg postgres.Storage) (*Metadata, error) {
 	}
 
 	metadata := &Metadata{
-		storage: pg,
-		source:  src,
-		vmType:  cfg.VM.Type,
+		storage:   pg,
+		source:    src,
+		vmType:    cfg.VM.Type,
+		publisher: messages.NewPublisher(),
 	}
 
 	metadata.pool = workerpool.NewTimedPool(
@@ -113,7 +116,13 @@ func (metadata *Metadata) processData(ctx context.Context, address string) error
 		return err
 	}
 
-	return metadata.save(ctx, model, methods, events)
+	if err := metadata.save(ctx, model, methods, events); err != nil {
+		return err
+	}
+
+	metadata.publisher.Notify(messages.NewMessage(messages.TopicMetadata, model))
+
+	return nil
 }
 
 func (metadata *Metadata) save(ctx context.Context, model storage.Metadata, methods []storage.Method, events []storage.Event) error {
@@ -168,4 +177,14 @@ func (metadata *Metadata) Close() error {
 	}
 
 	return nil
+}
+
+// Subscribe -
+func (metadata *Metadata) Subscribe(s *messages.Subscriber, topic messages.Topic) {
+	metadata.publisher.Subscribe(s, topic)
+}
+
+// Unsubscribe -
+func (metadata *Metadata) Unsubscribe(s *messages.Subscriber, topic messages.Topic) {
+	metadata.publisher.Unsubscribe(s, topic)
 }

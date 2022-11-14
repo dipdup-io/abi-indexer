@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/dipdup-net/abi-indexer/internal/messages"
-	"github.com/dipdup-net/abi-indexer/internal/modules/grpc/pb"
+	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb"
 	"github.com/rs/zerolog/log"
 	gogrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -119,4 +119,28 @@ func (client *Client) Subscribe(s *messages.Subscriber, topic messages.Topic) {
 // Unsubscribe -
 func (client *Client) Unsubscribe(s *messages.Subscriber, topic messages.Topic) {
 	client.publisher.Unsubscribe(s, topic)
+}
+
+// GetMetadata -
+func (client *Client) GetMetadata(ctx context.Context, address string) (*pb.Metadata, error) {
+	return client.client.GetMetadata(ctx, &pb.GetMetadataRequest{
+		Id:      client.subscriptionID,
+		Address: address,
+	})
+}
+
+// ListMetadata -
+func (client *Client) ListMetadata(ctx context.Context, limit, offset uint64, order pb.SortOrder) ([]*pb.Metadata, error) {
+	response, err := client.client.ListMetadata(ctx, &pb.ListMetadataRequest{
+		Id: client.subscriptionID,
+		Page: &pb.Page{
+			Limit:  limit,
+			Offset: offset,
+			Order:  order,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return response.Metadata, nil
 }

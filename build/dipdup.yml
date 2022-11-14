@@ -19,7 +19,7 @@ metadata:
 
 grpc:
   server:
-    bind: ${GRPC_BIND:-127.0.0.1:7777}
+    bind: ${GRPC_BIND:-127.0.0.1:7778}
 
 database:
   kind: postgres

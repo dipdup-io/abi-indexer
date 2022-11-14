@@ -9,8 +9,10 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/dipdup-net/abi-indexer/internal/modules/metadata"
+	"github.com/dipdup-net/abi-indexer/internal/messages"
 	"github.com/dipdup-net/abi-indexer/internal/storage/postgres"
+	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc"
+	"github.com/dipdup-net/abi-indexer/pkg/modules/metadata"
 
 	"github.com/dipdup-net/go-lib/cmdline"
 	"github.com/dipdup-net/go-lib/config"
@@ -59,23 +61,17 @@ func main() {
 		return
 	}
 
-	// grpcModule, err := grpc.NewServer(cfg.GRPC.Server)
-	// if err != nil {
-	// 	log.Panic().Err(err).Msg("creating grpc module")
-	// 	cancel()
-	// 	return
-	// }
+	grpcModule, err := grpc.NewServer(cfg.GRPC.Server, storage)
+	if err != nil {
+		log.Panic().Err(err).Msg("creating grpc module")
+		cancel()
+		return
+	}
+
+	metadataIndexer.Subscribe(grpcModule.Subscriber, messages.TopicMetadata)
 
 	metadataIndexer.Start(ctx)
-	// grpcModule.Start(ctx)
-
-	/////////////////////////////////////////////////////////////////
-	///////////////////    GRPC CLIENT EXAMPLE    ///////////////////
-	/////////////////////////////////////////////////////////////////
-
-	// grpcClient := grpc.NewClient(cfg.GRPC.Client)
-	// indexerModule.Subscribe(grpcModule.Subscriber, messages.TopicBlocks)
-	// grpcClient.Start(ctx)
+	grpcModule.Start(ctx)
 
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
@@ -83,15 +79,12 @@ func main() {
 	<-signals
 	cancel()
 
-	// if err := grpcClient.Close(); err != nil {
-	// 	log.Panic().Err(err).Msg("closing grpc client")
-	// }
 	if err := metadataIndexer.Close(); err != nil {
 		log.Panic().Err(err).Msg("closing metadata indexer")
 	}
-	// if err := grpcModule.Close(); err != nil {
-	// 	log.Panic().Err(err).Msg("closing grpc server")
-	// }
+	if err := grpcModule.Close(); err != nil {
+		log.Panic().Err(err).Msg("closing grpc server")
+	}
 	if err := storage.Close(); err != nil {
 		log.Panic().Err(err).Msg("closing postgres connection")
 	}

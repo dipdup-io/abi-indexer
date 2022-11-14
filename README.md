@@ -26,7 +26,11 @@ SOURCIFY_BASE_URL=https://sourcify.dev    # Sourcify base URL
 SOURCIFY_CHAIN_ID=1                       # Sourcify chain ID. Can be found here: https://sourcify.dev/server/chains
 SOURCIFY_TIMEOUT=10                       # timeout request to Sourcify
 FS_DIR=/etc/metadata                      # directory which used for File System source of ABI
-GRPC_BIND=127.0.0.1:7777                  # which hostname:port will be used for gRPC
+GRPC_BIND=127.0.0.1:7778                  # which hostname:port will be used for gRPC
 POSTGRES_HOST=127.0.0.1                   # Postgres hostname
 POSTGRES_PORT=5432                        # Postgres port
 ```
+
+## API
+
+You can communicate with module by [gRPC](/pkg/modules/grpc).
