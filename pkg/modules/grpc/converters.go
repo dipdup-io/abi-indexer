@@ -29,3 +29,14 @@ func ToMetadataModel(metadata *pb.Metadata) *storage.Metadata {
 		JSONSchema: metadata.GetJsonSchema(),
 	}
 }
+
+// ListMetadataResponse -
+func ListMetadataResponse(metadata []*storage.Metadata) *pb.ListMetadataResponse {
+	response := &pb.ListMetadataResponse{
+		Metadata: make([]*pb.Metadata, 0),
+	}
+	for i := range metadata {
+		response.Metadata = append(response.Metadata, Metadata(metadata[i]))
+	}
+	return response
+}

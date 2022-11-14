@@ -12,6 +12,8 @@ service MetadataService {
 
     rpc GetMetadata(GetMetadataRequest) returns (Metadata);
     rpc ListMetadata(ListMetadataRequest) returns (ListMetadataResponse);
+    rpc GetMetadataByMethodSinature(GetMetadataByMethodSinatureRequest) returns (ListMetadataResponse);
+    rpc GetMetadataByTopic(GetMetadataByTopicRequest) returns (ListMetadataResponse);
 }
 
 message GetMetadataRequest {
@@ -32,4 +34,16 @@ message Metadata {
     string address = 1;
     bytes metadata = 2;
     bytes json_schema = 3;
+}
+
+message GetMetadataByMethodSinatureRequest {
+    string id = 1;
+    Page page = 2;
+    string signature = 3;
+}
+
+message GetMetadataByTopicRequest {
+    string id = 1;
+    Page page = 2;
+    string topic = 3;
 }

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.13.0
-// source: internal/modules/grpc/proto/metadata.proto
+// source: pkg/modules/grpc/proto/metadata.proto
 
 package pb
 
@@ -26,6 +26,8 @@ type MetadataServiceClient interface {
 	UnsubscribeFromMetadata(ctx context.Context, in *DefaultRequest, opts ...grpc.CallOption) (*Message, error)
 	GetMetadata(ctx context.Context, in *GetMetadataRequest, opts ...grpc.CallOption) (*Metadata, error)
 	ListMetadata(ctx context.Context, in *ListMetadataRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error)
+	GetMetadataByMethodSinature(ctx context.Context, in *GetMetadataByMethodSinatureRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error)
+	GetMetadataByTopic(ctx context.Context, in *GetMetadataByTopicRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error)
 }
 
 type metadataServiceClient struct {
@@ -95,6 +97,24 @@ func (c *metadataServiceClient) ListMetadata(ctx context.Context, in *ListMetada
 	return out, nil
 }
 
+func (c *metadataServiceClient) GetMetadataByMethodSinature(ctx context.Context, in *GetMetadataByMethodSinatureRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error) {
+	out := new(ListMetadataResponse)
+	err := c.cc.Invoke(ctx, "/proto.MetadataService/GetMetadataByMethodSinature", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *metadataServiceClient) GetMetadataByTopic(ctx context.Context, in *GetMetadataByTopicRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error) {
+	out := new(ListMetadataResponse)
+	err := c.cc.Invoke(ctx, "/proto.MetadataService/GetMetadataByTopic", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MetadataServiceServer is the server API for MetadataService service.
 // All implementations must embed UnimplementedMetadataServiceServer
 // for forward compatibility
@@ -103,6 +123,8 @@ type MetadataServiceServer interface {
 	UnsubscribeFromMetadata(context.Context, *DefaultRequest) (*Message, error)
 	GetMetadata(context.Context, *GetMetadataRequest) (*Metadata, error)
 	ListMetadata(context.Context, *ListMetadataRequest) (*ListMetadataResponse, error)
+	GetMetadataByMethodSinature(context.Context, *GetMetadataByMethodSinatureRequest) (*ListMetadataResponse, error)
+	GetMetadataByTopic(context.Context, *GetMetadataByTopicRequest) (*ListMetadataResponse, error)
 	mustEmbedUnimplementedMetadataServiceServer()
 }
 
@@ -121,6 +143,12 @@ func (UnimplementedMetadataServiceServer) GetMetadata(context.Context, *GetMetad
 }
 func (UnimplementedMetadataServiceServer) ListMetadata(context.Context, *ListMetadataRequest) (*ListMetadataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListMetadata not implemented")
+}
+func (UnimplementedMetadataServiceServer) GetMetadataByMethodSinature(context.Context, *GetMetadataByMethodSinatureRequest) (*ListMetadataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMetadataByMethodSinature not implemented")
+}
+func (UnimplementedMetadataServiceServer) GetMetadataByTopic(context.Context, *GetMetadataByTopicRequest) (*ListMetadataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMetadataByTopic not implemented")
 }
 func (UnimplementedMetadataServiceServer) mustEmbedUnimplementedMetadataServiceServer() {}
 
@@ -210,6 +238,42 @@ func _MetadataService_ListMetadata_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MetadataService_GetMetadataByMethodSinature_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMetadataByMethodSinatureRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetadataServiceServer).GetMetadataByMethodSinature(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.MetadataService/GetMetadataByMethodSinature",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetadataServiceServer).GetMetadataByMethodSinature(ctx, req.(*GetMetadataByMethodSinatureRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _MetadataService_GetMetadataByTopic_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMetadataByTopicRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MetadataServiceServer).GetMetadataByTopic(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.MetadataService/GetMetadataByTopic",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MetadataServiceServer).GetMetadataByTopic(ctx, req.(*GetMetadataByTopicRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MetadataService_ServiceDesc is the grpc.ServiceDesc for MetadataService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -229,6 +293,14 @@ var MetadataService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "ListMetadata",
 			Handler:    _MetadataService_ListMetadata_Handler,
 		},
+		{
+			MethodName: "GetMetadataByMethodSinature",
+			Handler:    _MetadataService_GetMetadataByMethodSinature_Handler,
+		},
+		{
+			MethodName: "GetMetadataByTopic",
+			Handler:    _MetadataService_GetMetadataByTopic_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -237,5 +309,5 @@ var MetadataService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "internal/modules/grpc/proto/metadata.proto",
+	Metadata: "pkg/modules/grpc/proto/metadata.proto",
 }

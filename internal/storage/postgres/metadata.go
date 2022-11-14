@@ -25,3 +25,13 @@ func (m *Metadata) GetByAddress(ctx context.Context, address string) (*storage.M
 	err := m.db.DB().ModelContext(ctx, &response).Where("contract = ?", address).First()
 	return &response, err
 }
+
+// GetByMethodSinature -
+func (m *Metadata) GetByMethodSinature(ctx context.Context, signature string, limit, offset uint64, order storage.SortOrder) ([]*storage.Metadata, error) {
+	return nil, nil
+}
+
+// GetByTopic -
+func (m *Metadata) GetByTopic(ctx context.Context, topic string, limit, offset uint64, order storage.SortOrder) ([]*storage.Metadata, error) {
+	return nil, nil
+}

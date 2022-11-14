@@ -23,6 +23,30 @@ const (
 	clientID contextKey = "client_id"
 )
 
+type page struct {
+	limit  uint64
+	offset uint64
+	order  storage.SortOrder
+}
+
+func newPage(req *pb.Page) *page {
+	p := new(page)
+	if req != nil {
+		p.limit = req.Limit
+		p.offset = req.Offset
+
+		switch req.Order {
+		case pb.SortOrder_ASC:
+			p.order = storage.SortOrderAsc
+		case pb.SortOrder_DESC:
+			p.order = storage.SortOrderDesc
+		default:
+			p.order = storage.SortOrderAsc
+		}
+	}
+	return p
+}
+
 ////////////////////////////////////////////////
 //////////////    HANDLERS    //////////////////
 ////////////////////////////////////////////////
@@ -104,34 +128,38 @@ func (module *Server) GetMetadata(ctx context.Context, req *pb.GetMetadataReques
 
 // ListMetadata -
 func (module *Server) ListMetadata(ctx context.Context, req *pb.ListMetadataRequest) (*pb.ListMetadataResponse, error) {
-	var limit uint64
-	var offset uint64
-	var order storage.SortOrder
+	p := newPage(req.GetPage())
 
-	if page := req.GetPage(); page != nil {
-		limit = page.Limit
-		offset = page.Offset
-
-		switch page.Order {
-		case pb.SortOrder_ASC:
-			order = storage.SortOrderAsc
-		case pb.SortOrder_DESC:
-			order = storage.SortOrderDesc
-		}
-	}
-
-	metadata, err := module.storage.Metadata.List(ctx, limit, offset, order)
+	metadata, err := module.storage.Metadata.List(ctx, p.limit, p.offset, p.order)
 	if err != nil {
 		return nil, err
 	}
 
-	response := &pb.ListMetadataResponse{
-		Metadata: make([]*pb.Metadata, 0),
+	return ListMetadataResponse(metadata), nil
+}
+
+// GetMetadataByMethodSinature -
+func (module *Server) GetMetadataByMethodSinature(ctx context.Context, req *pb.GetMetadataByMethodSinatureRequest) (*pb.ListMetadataResponse, error) {
+	p := newPage(req.GetPage())
+
+	metadata, err := module.storage.Metadata.GetByMethodSinature(ctx, req.Signature, p.limit, p.offset, p.order)
+	if err != nil {
+		return nil, err
 	}
-	for i := range metadata {
-		response.Metadata = append(response.Metadata, Metadata(metadata[i]))
+
+	return ListMetadataResponse(metadata), nil
+}
+
+// GetMetadataByTopic -
+func (module *Server) GetMetadataByTopic(ctx context.Context, req *pb.GetMetadataByTopicRequest) (*pb.ListMetadataResponse, error) {
+	p := newPage(req.GetPage())
+
+	metadata, err := module.storage.Metadata.GetByTopic(ctx, req.Topic, p.limit, p.offset, p.order)
+	if err != nil {
+		return nil, err
 	}
-	return response, nil
+
+	return ListMetadataResponse(metadata), nil
 }
 
 func (module *Server) getSubscriber(id string) (*subscriptions.Subscriptions, error) {

@@ -147,3 +147,37 @@ func (client *Client) ListMetadata(ctx context.Context, limit, offset uint64, or
 	}
 	return response.Metadata, nil
 }
+
+// GetMetadataByMethodSinature -
+func (client *Client) GetMetadataByMethodSinature(ctx context.Context, limit, offset uint64, order pb.SortOrder, signature string) ([]*pb.Metadata, error) {
+	response, err := client.client.GetMetadataByMethodSinature(ctx, &pb.GetMetadataByMethodSinatureRequest{
+		Id: client.subscriptionID,
+		Page: &pb.Page{
+			Limit:  limit,
+			Offset: offset,
+			Order:  order,
+		},
+		Signature: signature,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return response.Metadata, nil
+}
+
+// GetMetadataByTopic -
+func (client *Client) GetMetadataByTopic(ctx context.Context, limit, offset uint64, order pb.SortOrder, topic string) ([]*pb.Metadata, error) {
+	response, err := client.client.GetMetadataByTopic(ctx, &pb.GetMetadataByTopicRequest{
+		Id: client.subscriptionID,
+		Page: &pb.Page{
+			Limit:  limit,
+			Offset: offset,
+			Order:  order,
+		},
+		Topic: topic,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return response.Metadata, nil
+}
