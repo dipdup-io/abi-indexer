@@ -52,7 +52,7 @@ message Metadata {
 
 ```
 
-* `UnsubscribeFromMetadata` - receives ABI by contract address.
+* `UnsubscribeFromMetadata` - unsubscribes from metadata stream
 
 ```protobuf
 message DefaultRequest {
