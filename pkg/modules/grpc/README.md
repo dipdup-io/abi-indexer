@@ -129,8 +129,15 @@ To create client module write the following code:
 
 ```go
 grpcClient := grpc.NewClient(cfg.GRPC.Client)                       // create module
-grpcClient.Subscribe(yourModule.Subscriber, messages.TopicMetadata) // subscribe on events
-grpcClient.Start(ctx)                                               // running for listening new metadata events
+grpcClient.Subscribe(yourModule.Subscriber, messages.TopicMetadata) // subscribe on internal events
+
+if err := grpcClient.Connect(ctx); err != nil {                     // create connection to server
+    log.Panic().Err(err).Msg("GetMetadata")
+    cancel()
+    return
+}
+
+grpcClient.Start(ctx)                                               // listening for server events
 
 data, err := grpcClient.GetMetadata(ctx, "0x...")                   // receiving metadata by gRPC
 if err != nil {

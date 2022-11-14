@@ -9,6 +9,7 @@ import (
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb"
 	metadataModule "github.com/dipdup-net/abi-indexer/pkg/modules/metadata"
 	"github.com/dipdup-net/indexer-sdk/messages"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	gogrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -40,8 +41,8 @@ func NewClient(cfg *ClientConfig) *Client {
 	}
 }
 
-// Start -
-func (client *Client) Start(ctx context.Context) {
+// Connect -
+func (client *Client) Connect(ctx context.Context) error {
 	conn, err := gogrpc.Dial(
 		client.serverAddress,
 		gogrpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -52,8 +53,7 @@ func (client *Client) Start(ctx context.Context) {
 		}),
 	)
 	if err != nil {
-		log.Err(err).Msg("dial connection")
-		return
+		return errors.Wrap(err, "dial connection")
 	}
 	client.conn = conn
 	client.authClient = pb.NewHelloServiceClient(conn)
@@ -61,26 +61,28 @@ func (client *Client) Start(ctx context.Context) {
 
 	hello, err := client.authClient.Hello(ctx, new(pb.HelloRequest))
 	if err != nil {
-		log.Err(err).Msg("error after hello request")
-		return
+		return errors.Wrap(err, "error after hello request")
 	}
 	client.subscriptionID = hello.Id
-
-	client.wg.Add(1)
-	go client.subscribeOnMetadata(ctx, client.subscriptions.Head)
-
+	return nil
 }
 
-func (client *Client) subscribeOnMetadata(ctx context.Context, active bool) {
+// Start -
+func (client *Client) Start(ctx context.Context) {
+	client.wg.Add(1)
+	go client.subscribeOnMetadata(ctx)
+}
+
+func (client *Client) subscribeOnMetadata(ctx context.Context) {
 	defer client.wg.Done()
 
-	if !active {
+	if !client.subscriptions.Metadata {
 		return
 	}
 
 	stream, err := client.client.SubscribeOnMetadata(ctx, MetadataRequest(client.subscriptionID))
 	if err != nil {
-		log.Err(err).Msg("subscribe on head")
+		log.Err(err).Msg("subscribe on metadata")
 		return
 	}
 
@@ -94,7 +96,7 @@ func (client *Client) subscribeOnMetadata(ctx context.Context, active bool) {
 				continue
 			}
 			if err != nil {
-				log.Err(err).Msg("receiving head error")
+				log.Err(err).Msg("receiving metadata error")
 				continue
 			}
 
