@@ -17,6 +17,8 @@ type Event struct {
 	SignatureID []byte
 	MetadataID  uint64
 	Anonymous   bool `pg:"default:false"`
+
+	Metadata *Metadata `pg:",rel:has-one"`
 }
 
 // TableName -

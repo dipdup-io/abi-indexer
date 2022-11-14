@@ -5,6 +5,7 @@ import (
 
 	"github.com/dipdup-net/abi-indexer/internal/storage"
 	"github.com/dipdup-net/go-lib/database"
+	"github.com/go-pg/pg/v10/orm"
 )
 
 // Table -
@@ -32,8 +33,15 @@ func (s *Table[M]) Update(ctx context.Context, m M) error {
 // List -
 func (s *Table[M]) List(ctx context.Context, limit, offset uint64, order storage.SortOrder) ([]M, error) {
 	var models []M
-	query := s.db.DB().ModelContext(ctx, &models)
 
+	query := s.db.DB().ModelContext(ctx, &models)
+	query = addPagination(query, limit, offset, order)
+
+	err := query.Select(&models)
+	return models, err
+}
+
+func addPagination(query *orm.Query, limit, offset uint64, order storage.SortOrder) *orm.Query {
 	if limit == 0 {
 		limit = 10
 	}
@@ -48,7 +56,5 @@ func (s *Table[M]) List(ctx context.Context, limit, offset uint64, order storage
 	default:
 		query.Order("id asc")
 	}
-
-	err := query.Select(&models)
-	return models, err
+	return query
 }

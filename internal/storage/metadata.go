@@ -7,7 +7,7 @@ type IMetadata interface {
 	Table[*Metadata]
 
 	GetByAddress(ctx context.Context, address string) (*Metadata, error)
-	GetByMethodSinature(ctx context.Context, signature string, limit, offset uint64, order SortOrder) ([]*Metadata, error)
+	GetByMethod(ctx context.Context, signature string, limit, offset uint64, order SortOrder) ([]*Metadata, error)
 	GetByTopic(ctx context.Context, topic string, limit, offset uint64, order SortOrder) ([]*Metadata, error)
 }
 

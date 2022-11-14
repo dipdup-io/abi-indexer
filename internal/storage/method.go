@@ -20,6 +20,8 @@ type Method struct {
 	Signature   string
 	SignatureID []byte
 	MetadataID  uint64
+
+	Metadata *Metadata `pg:",rel:has-one"`
 }
 
 // TableName -

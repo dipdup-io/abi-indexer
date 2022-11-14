@@ -142,7 +142,7 @@ func (module *Server) ListMetadata(ctx context.Context, req *pb.ListMetadataRequ
 func (module *Server) GetMetadataByMethodSinature(ctx context.Context, req *pb.GetMetadataByMethodSinatureRequest) (*pb.ListMetadataResponse, error) {
 	p := newPage(req.GetPage())
 
-	metadata, err := module.storage.Metadata.GetByMethodSinature(ctx, req.Signature, p.limit, p.offset, p.order)
+	metadata, err := module.storage.Metadata.GetByMethod(ctx, req.Signature, p.limit, p.offset, p.order)
 	if err != nil {
 		return nil, err
 	}

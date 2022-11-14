@@ -1,6 +1,6 @@
 # gRPC
 
-Metadata gRPC API exposes on 7778 port. 
+Metadata gRPC API exposes on 7778 port. Link to [proto file](/pkg/modules/grpc/proto/metadata.proto).
 
 ## Endpoints
 
@@ -33,6 +33,8 @@ service MetadataService {
 
     rpc GetMetadata(GetMetadataRequest) returns (Metadata);
     rpc ListMetadata(ListMetadataRequest) returns (ListMetadataResponse);
+    rpc GetMetadataByMethodSinature(GetMetadataByMethodSinatureRequest) returns (ListMetadataResponse);
+    rpc GetMetadataByTopic(GetMetadataByTopicRequest) returns (ListMetadataResponse);
 }
 ```
 
@@ -100,6 +102,27 @@ message ListMetadataResponse {
     repeated Metadata metadata = 1;
 }
 ```
+
+* `GetMetadataByMethodSinature` - receives all metadata contains certain method signature with sorting and pagination.
+
+```protobuf
+message GetMetadataByMethodSinatureRequest {
+    string id = 1;
+    Page page = 2;
+    string signature = 3;
+}
+```
+
+
+* `GetMetadataByTopic` - receives all metadata contains certain method signature with sorting and pagination.
+
+```protobuf
+message GetMetadataByTopicRequest {
+    string id = 1;
+    Page page = 2;
+    string topic = 3;
+}
+``` 
 
 ## Usage
 
