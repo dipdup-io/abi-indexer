@@ -9,7 +9,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/dipdup-net/abi-indexer/internal/messages"
 	"github.com/dipdup-net/abi-indexer/internal/storage/postgres"
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc"
 	"github.com/dipdup-net/abi-indexer/pkg/modules/metadata"
@@ -68,7 +67,7 @@ func main() {
 		return
 	}
 
-	metadataIndexer.Subscribe(grpcModule.Subscriber, messages.TopicMetadata)
+	metadataIndexer.Subscribe(grpcModule.Subscriber, metadata.TopicMetadata)
 
 	metadataIndexer.Start(ctx)
 	grpcModule.Start(ctx)

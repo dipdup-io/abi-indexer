@@ -5,7 +5,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/dipdup-net/abi-indexer/internal/random"
 	"github.com/dipdup-net/abi-indexer/internal/storage"
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb"
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/subscriptions"
@@ -157,7 +156,7 @@ func (module *Server) HandleRPC(ctx context.Context, s stats.RPCStats) {}
 
 // TagConn -
 func (module *Server) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.Context {
-	id, err := random.String(32)
+	id, err := randomString(32)
 	if err != nil {
 		log.Err(err).Msg("invalid random string")
 	}

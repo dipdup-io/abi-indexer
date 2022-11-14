@@ -2,15 +2,16 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"net"
 	"sync"
 	"time"
 
-	"github.com/dipdup-net/abi-indexer/internal/messages"
 	"github.com/dipdup-net/abi-indexer/internal/storage"
 	"github.com/dipdup-net/abi-indexer/internal/storage/postgres"
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb"
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/subscriptions"
+	"github.com/dipdup-net/indexer-sdk/messages"
 	"github.com/rs/zerolog/log"
 	gogrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
@@ -31,7 +32,10 @@ type Server struct {
 }
 
 // NewServer -
-func NewServer(cfg ServerConfig, pg postgres.Storage) (*Server, error) {
+func NewServer(cfg *ServerConfig, pg postgres.Storage) (*Server, error) {
+	if cfg == nil {
+		return nil, errors.New("configuration structure of gRPC server is nil")
+	}
 	subscriber, err := messages.NewSubscriber()
 	if err != nil {
 		return nil, err
@@ -99,8 +103,8 @@ func (module *Server) listen(ctx context.Context) {
 
 		case msg := <-module.Listen():
 			switch typedMsg := msg.Data().(type) {
-			case *storage.Metadata:
-				module.metadataHandler(typedMsg)
+			case storage.Metadata:
+				module.metadataHandler(&typedMsg)
 			default:
 				log.Warn().Msgf("unknown message type: %T", typedMsg)
 			}

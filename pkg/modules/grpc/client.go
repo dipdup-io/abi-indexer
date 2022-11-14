@@ -6,8 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dipdup-net/abi-indexer/internal/messages"
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb"
+	metadataModule "github.com/dipdup-net/abi-indexer/pkg/modules/metadata"
+	"github.com/dipdup-net/indexer-sdk/messages"
 	"github.com/rs/zerolog/log"
 	gogrpc "google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -30,7 +31,7 @@ type Client struct {
 }
 
 // NewClient -
-func NewClient(cfg ClientConfig) *Client {
+func NewClient(cfg *ClientConfig) *Client {
 	return &Client{
 		publisher:     messages.NewPublisher(),
 		subscriptions: cfg.Subscriptions,
@@ -98,7 +99,7 @@ func (client *Client) subscribeOnMetadata(ctx context.Context, active bool) {
 			}
 
 			log.Trace().Str("contract", metadata.Address).Msg("new metadata")
-			client.publisher.Notify(messages.NewMessage(messages.TopicMetadata, metadata))
+			client.publisher.Notify(messages.NewMessage(metadataModule.TopicMetadata, metadata))
 		}
 	}
 }

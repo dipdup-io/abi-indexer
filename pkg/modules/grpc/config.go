@@ -38,6 +38,6 @@ type TxsConfig struct {
 
 // Config -
 type Config struct {
-	Server ServerConfig `yaml:"server"`
-	Client ClientConfig `yaml:"client"`
+	Server *ServerConfig `yaml:"server" validate:"omitempty"`
+	Client *ClientConfig `yaml:"client" validate:"omitempty"`
 }

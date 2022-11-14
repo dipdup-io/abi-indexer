@@ -3,14 +3,19 @@ package metadata
 import (
 	"context"
 
-	"github.com/dipdup-net/abi-indexer/internal/messages"
 	"github.com/dipdup-net/abi-indexer/internal/sources"
 	"github.com/dipdup-net/abi-indexer/internal/storage"
 	"github.com/dipdup-net/abi-indexer/internal/storage/postgres"
 	"github.com/dipdup-net/abi-indexer/internal/vm"
+	"github.com/dipdup-net/indexer-sdk/messages"
 	"github.com/dipdup-net/workerpool"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+)
+
+// topics
+const (
+	TopicMetadata messages.Topic = "metadata"
 )
 
 // Metadata -
@@ -120,7 +125,7 @@ func (metadata *Metadata) processData(ctx context.Context, address string) error
 		return err
 	}
 
-	metadata.publisher.Notify(messages.NewMessage(messages.TopicMetadata, model))
+	metadata.publisher.Notify(messages.NewMessage(TopicMetadata, model))
 
 	return nil
 }
