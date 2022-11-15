@@ -23,8 +23,10 @@ github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 h1:YLtO71vCjJRCBcrPMtQ9nqBsqpA1
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1/go.mod h1:hyedUtir6IdtD/7lIxGeCxkaw7y45JueMRL4DIyJDKs=
 github.com/dipdup-net/go-lib v0.2.22 h1:VDo6Atzl7OkXHI6H15NpZB8sIv/+mzK1JGRYEVs+gH8=
 github.com/dipdup-net/go-lib v0.2.22/go.mod h1:RCYx6FV8+7qQkC1dCP8zn8WTlsFRXXx/D4N+2mw1GJg=
-github.com/dipdup-net/indexer-sdk v0.0.0-20221114194242-c46922f84a6a h1:yTn2CmDxR+ARozKYKL3UcyPVedkFWswmTKT8gHPzeWc=
-github.com/dipdup-net/indexer-sdk v0.0.0-20221114194242-c46922f84a6a/go.mod h1:YT5xKfu8xGOdOiuR1s2BujktM+/iHNuepLnZsz7TUhM=
+github.com/dipdup-net/indexer-sdk v0.0.0-20221115143510-66d75ce98c89 h1:6oCks2tZpm8/aef//WAkGLDCKuYchGSNyja7/hQ+jdE=
+github.com/dipdup-net/indexer-sdk v0.0.0-20221115143510-66d75ce98c89/go.mod h1:VY/In/QwdceBOax3D+wssKsCHlq8rnT3EUD/F5wMWnM=
+github.com/dipdup-net/indexer-sdk v0.0.0-20221115181128-c4ca2f2731ae h1:muCitSGgn1pHyJNLC5mGcYhczc96k0+TQAvk1NWsOE4=
+github.com/dipdup-net/indexer-sdk v0.0.0-20221115181128-c4ca2f2731ae/go.mod h1:VY/In/QwdceBOax3D+wssKsCHlq8rnT3EUD/F5wMWnM=
 github.com/dipdup-net/sourcify-api v0.0.2 h1:OXyWmtg/Kxxi1ekrbPZ3X80H8gQapdylHk7xT+R861k=
 github.com/dipdup-net/sourcify-api v0.0.2/go.mod h1:xsnXeL+qKfDfHya8tV8pGyI+3evH7cFGjE1q0mdkEM8=
 github.com/dipdup-net/workerpool v0.0.1 h1:Ixx1y3MxFrRAjcw29vxpoTFwbgs7XhA+wGWH9HVtePo=
@@ -353,8 +355,8 @@ google.golang.org/protobuf v1.23.1-0.20200526195155-81db48ad09cc/go.mod h1:EGpAD
 google.golang.org/protobuf v1.25.0/go.mod h1:9JNX74DMeImyA3h4bdi1ymwjUzf21/xIlbajtzgsN7c=
 google.golang.org/protobuf v1.26.0-rc.1/go.mod h1:jlhhOSvTdKEhbULTjvd4ARK9grFBp09yW+WbY/TyQbw=
 google.golang.org/protobuf v1.26.0/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQnmE0givc=
-google.golang.org/protobuf v1.27.1 h1:SnqbnDw1V7RiZcXPx5MEeqPv2s79L9i7BJUlG/+RurQ=
-google.golang.org/protobuf v1.27.1/go.mod h1:9q0QmTI4eRPtz6boOQmLYwt+qCgq0jsYwAQnmE0givc=
+google.golang.org/protobuf v1.28.1 h1:d0NfwRgPtno5B1Wa6L2DAG+KivqkdutMf1UhdNx175w=
+google.golang.org/protobuf v1.28.1/go.mod h1:HV8QOd/L58Z+nl8r43ehVNZIU/HEI6OcFqwMG9pJV4I=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=

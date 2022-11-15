@@ -2,86 +2,99 @@ package grpc
 
 import (
 	"context"
+	"errors"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/dipdup-net/abi-indexer/internal/storage"
+	"github.com/dipdup-net/abi-indexer/internal/storage/postgres"
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb"
-	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/subscriptions"
-	"github.com/pkg/errors"
+	"github.com/dipdup-net/indexer-sdk/pkg/modules/grpc"
+	generalPB "github.com/dipdup-net/indexer-sdk/pkg/modules/grpc/pb"
 	"github.com/rs/zerolog/log"
-	"google.golang.org/grpc/stats"
 )
 
-const (
-	successMessage = "success"
-)
+// Server -
+type Server struct {
+	*grpc.Server
+	pb.UnimplementedMetadataServiceServer
 
-type contextKey string
+	storage               postgres.Storage
+	metadataSubscriptions *grpc.Subscriptions[*storage.Metadata, *pb.Metadata]
 
-const (
-	clientID contextKey = "client_id"
-)
-
-type page struct {
-	limit  uint64
-	offset uint64
-	order  storage.SortOrder
+	wg *sync.WaitGroup
 }
 
-func newPage(req *pb.Page) *page {
-	p := new(page)
-	if req != nil {
-		p.limit = req.Limit
-		p.offset = req.Offset
+// NewServer -
+func NewServer(cfg *grpc.ServerConfig, pg postgres.Storage) (*Server, error) {
+	if cfg == nil {
+		return nil, errors.New("configuration structure of gRPC server is nil")
+	}
 
-		switch req.Order {
-		case pb.SortOrder_ASC:
-			p.order = storage.SortOrderAsc
-		case pb.SortOrder_DESC:
-			p.order = storage.SortOrderDesc
-		default:
-			p.order = storage.SortOrderAsc
+	server, err := grpc.NewServer(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Server{
+		Server:                server,
+		storage:               pg,
+		metadataSubscriptions: grpc.NewSubscriptions[*storage.Metadata, *pb.Metadata](),
+		wg:                    new(sync.WaitGroup),
+	}, nil
+}
+
+// Start -
+func (server *Server) Start(ctx context.Context) {
+	server.Server.Start(ctx)
+
+	server.wg.Add(1)
+	go server.listen(ctx)
+}
+
+func (server *Server) listen(ctx context.Context) {
+	defer server.wg.Done()
+
+	ticker := time.NewTicker(time.Second * 15)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+
+		case msg := <-server.Listen():
+			switch typedMsg := msg.Data().(type) {
+			case storage.Metadata:
+				server.metadataSubscriptions.NotifyAll(&typedMsg, Metadata(&typedMsg))
+			default:
+				log.Warn().Msgf("unknown message type: %T", typedMsg)
+			}
 		}
 	}
-	return p
+}
+
+// Close -
+func (server *Server) Close() error {
+	return server.Server.Close()
 }
 
 ////////////////////////////////////////////////
 //////////////    HANDLERS    //////////////////
 ////////////////////////////////////////////////
 
-// UnsubscribeFromHead -
-func (module *Server) Hello(ctx context.Context, req *pb.HelloRequest) (*pb.HelloResponse, error) {
-	id := ctx.Value(clientID)
-	if id == nil {
-		return nil, errors.New("unknown client")
-	}
-
-	return &pb.HelloResponse{
-		Id: id.(string),
-	}, nil
-}
-
 // SubscribeOnMetadata -
-func (module *Server) SubscribeOnMetadata(req *pb.DefaultRequest, stream pb.MetadataService_SubscribeOnMetadataServer) error {
-	var metadataSub subscriptions.Subscription[*storage.Metadata, *pb.Metadata]
-	module.subsMx.Lock()
-	{
-		subs, err := module.getSubscriber(req.Id)
-		if err != nil {
-			return err
-		}
-		subs.Metadata = subscriptions.NewMetadata()
-		metadataSub = subs.Metadata
-	}
-	module.subsMx.Unlock()
+func (server *Server) SubscribeOnMetadata(req *generalPB.DefaultRequest, stream pb.MetadataService_SubscribeOnMetadataServer) error {
+	subscription := NewMetadataSubscription()
+	server.metadataSubscriptions.Add(req.Id, subscription)
 
 	for {
 		select {
 		case <-stream.Context().Done():
 			return nil
-		case msg := <-metadataSub.Listen():
+		case msg := <-subscription.Listen():
 			if err := stream.Send(msg); err != nil {
 				if err == io.EOF {
 					return nil
@@ -93,24 +106,18 @@ func (module *Server) SubscribeOnMetadata(req *pb.DefaultRequest, stream pb.Meta
 }
 
 // UnsubscribeFromMetadata -
-func (module *Server) UnsubscribeFromMetadata(ctx context.Context, req *pb.DefaultRequest) (*pb.Message, error) {
-	module.subsMx.Lock()
-	{
-		subs, err := module.getSubscriber(req.Id)
-		if err != nil {
-			return nil, err
-		}
-		subs.Metadata = nil
+func (server *Server) UnsubscribeFromMetadata(ctx context.Context, req *generalPB.DefaultRequest) (*generalPB.Message, error) {
+	if err := server.metadataSubscriptions.Remove(req.Id); err != nil {
+		return nil, err
 	}
-	module.subsMx.Unlock()
 
-	return &pb.Message{
-		Message: successMessage,
+	return &generalPB.Message{
+		Message: grpc.SuccessMessage,
 	}, nil
 }
 
 // GetMetadata -
-func (module *Server) GetMetadata(ctx context.Context, req *pb.GetMetadataRequest) (*pb.Metadata, error) {
+func (server *Server) GetMetadata(ctx context.Context, req *pb.GetMetadataRequest) (*pb.Metadata, error) {
 	if req == nil {
 		return nil, errors.New("invalid request")
 	}
@@ -118,7 +125,7 @@ func (module *Server) GetMetadata(ctx context.Context, req *pb.GetMetadataReques
 	reqCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	metadata, err := module.storage.Metadata.GetByAddress(reqCtx, req.Address)
+	metadata, err := server.storage.Metadata.GetByAddress(reqCtx, req.Address)
 	if err != nil {
 		return nil, err
 	}
@@ -127,10 +134,10 @@ func (module *Server) GetMetadata(ctx context.Context, req *pb.GetMetadataReques
 }
 
 // ListMetadata -
-func (module *Server) ListMetadata(ctx context.Context, req *pb.ListMetadataRequest) (*pb.ListMetadataResponse, error) {
+func (server *Server) ListMetadata(ctx context.Context, req *pb.ListMetadataRequest) (*pb.ListMetadataResponse, error) {
 	p := newPage(req.GetPage())
 
-	metadata, err := module.storage.Metadata.List(ctx, p.limit, p.offset, p.order)
+	metadata, err := server.storage.Metadata.List(ctx, p.limit, p.offset, p.order)
 	if err != nil {
 		return nil, err
 	}
@@ -139,10 +146,10 @@ func (module *Server) ListMetadata(ctx context.Context, req *pb.ListMetadataRequ
 }
 
 // GetMetadataByMethodSinature -
-func (module *Server) GetMetadataByMethodSinature(ctx context.Context, req *pb.GetMetadataByMethodSinatureRequest) (*pb.ListMetadataResponse, error) {
+func (server *Server) GetMetadataByMethodSinature(ctx context.Context, req *pb.GetMetadataByMethodSinatureRequest) (*pb.ListMetadataResponse, error) {
 	p := newPage(req.GetPage())
 
-	metadata, err := module.storage.Metadata.GetByMethod(ctx, req.Signature, p.limit, p.offset, p.order)
+	metadata, err := server.storage.Metadata.GetByMethod(ctx, req.Signature, p.limit, p.offset, p.order)
 	if err != nil {
 		return nil, err
 	}
@@ -151,71 +158,13 @@ func (module *Server) GetMetadataByMethodSinature(ctx context.Context, req *pb.G
 }
 
 // GetMetadataByTopic -
-func (module *Server) GetMetadataByTopic(ctx context.Context, req *pb.GetMetadataByTopicRequest) (*pb.ListMetadataResponse, error) {
+func (server *Server) GetMetadataByTopic(ctx context.Context, req *pb.GetMetadataByTopicRequest) (*pb.ListMetadataResponse, error) {
 	p := newPage(req.GetPage())
 
-	metadata, err := module.storage.Metadata.GetByTopic(ctx, req.Topic, p.limit, p.offset, p.order)
+	metadata, err := server.storage.Metadata.GetByTopic(ctx, req.Topic, p.limit, p.offset, p.order)
 	if err != nil {
 		return nil, err
 	}
 
 	return ListMetadataResponse(metadata), nil
-}
-
-func (module *Server) getSubscriber(id string) (*subscriptions.Subscriptions, error) {
-	s, ok := module.subscribers[id]
-	if !ok {
-		return nil, errors.Errorf("unknown subscriber: %s", id)
-	}
-	return s, nil
-}
-
-////////////////////////////////////////////////
-////////////////    STATS    ///////////////////
-////////////////////////////////////////////////
-
-// TagRPC -
-func (module *Server) TagRPC(ctx context.Context, info *stats.RPCTagInfo) context.Context {
-	return ctx
-}
-
-// HandleRPC -
-func (module *Server) HandleRPC(ctx context.Context, s stats.RPCStats) {}
-
-// TagConn -
-func (module *Server) TagConn(ctx context.Context, info *stats.ConnTagInfo) context.Context {
-	id, err := randomString(32)
-	if err != nil {
-		log.Err(err).Msg("invalid random string")
-	}
-	return context.WithValue(ctx, clientID, id)
-}
-
-// HandleConn -
-func (module *Server) HandleConn(ctx context.Context, s stats.ConnStats) {
-	id := ctx.Value(clientID).(string)
-
-	switch s.(type) {
-	case *stats.ConnEnd:
-		module.subsMx.Lock()
-		{
-			if subs, ok := module.subscribers[id]; ok {
-				if err := subs.Close(); err != nil {
-					log.Err(err).Msg("closing subscriber")
-				}
-				delete(module.subscribers, id)
-			}
-		}
-		module.subsMx.Unlock()
-	case *stats.ConnBegin:
-		module.subsMx.Lock()
-		{
-			if _, ok := module.subscribers[id]; !ok {
-				module.subscribers[id] = &subscriptions.Subscriptions{
-					ID: id,
-				}
-			}
-		}
-		module.subsMx.Unlock()
-	}
 }

@@ -4,71 +4,37 @@ import (
 	"context"
 	"io"
 	"sync"
-	"time"
 
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb"
 	metadataModule "github.com/dipdup-net/abi-indexer/pkg/modules/metadata"
-	"github.com/dipdup-net/indexer-sdk/messages"
-	"github.com/pkg/errors"
+	"github.com/dipdup-net/indexer-sdk/pkg/messages"
+	grpcModules "github.com/dipdup-net/indexer-sdk/pkg/modules/grpc"
+	generalPB "github.com/dipdup-net/indexer-sdk/pkg/modules/grpc/pb"
 	"github.com/rs/zerolog/log"
-	gogrpc "google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/keepalive"
 )
 
 // Client -
 type Client struct {
-	publisher *messages.Publisher
-	conn      *gogrpc.ClientConn
+	*grpcModules.AuthClient
 
-	client     pb.MetadataServiceClient
-	authClient pb.HelloServiceClient
-
-	subscriptions  *Subscriptions
-	subscriptionID string
-	serverAddress  string
-
-	wg *sync.WaitGroup
+	client        pb.MetadataServiceClient
+	subscriptions *Subscriptions
+	wg            *sync.WaitGroup
 }
 
 // NewClient -
 func NewClient(cfg *ClientConfig) *Client {
 	return &Client{
-		publisher:     messages.NewPublisher(),
+		AuthClient:    grpcModules.NewAuthClient(cfg.ServerAddress),
 		subscriptions: cfg.Subscriptions,
-		serverAddress: cfg.ServerAddress,
 		wg:            new(sync.WaitGroup),
 	}
 }
 
-// Connect -
-func (client *Client) Connect(ctx context.Context) error {
-	conn, err := gogrpc.Dial(
-		client.serverAddress,
-		gogrpc.WithTransportCredentials(insecure.NewCredentials()),
-		gogrpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                (time.Duration(20) * time.Second),
-			Timeout:             (time.Duration(10) * time.Second),
-			PermitWithoutStream: true,
-		}),
-	)
-	if err != nil {
-		return errors.Wrap(err, "dial connection")
-	}
-	client.conn = conn
-	client.authClient = pb.NewHelloServiceClient(conn)
-	client.client = pb.NewMetadataServiceClient(conn)
-
-	hello, err := client.authClient.Hello(ctx, new(pb.HelloRequest))
-	if err != nil {
-		return errors.Wrap(err, "error after hello request")
-	}
-	client.subscriptionID = hello.Id
-	return nil
-}
-
 // Start -
 func (client *Client) Start(ctx context.Context) {
+	client.client = pb.NewMetadataServiceClient(client.Connection())
+
 	client.wg.Add(1)
 	go client.subscribeOnMetadata(ctx)
 }
@@ -80,7 +46,7 @@ func (client *Client) subscribeOnMetadata(ctx context.Context) {
 		return
 	}
 
-	stream, err := client.client.SubscribeOnMetadata(ctx, MetadataRequest(client.subscriptionID))
+	stream, err := client.client.SubscribeOnMetadata(ctx, MetadataRequest(client.SubscriptionID))
 	if err != nil {
 		log.Err(err).Msg("subscribe on metadata")
 		return
@@ -101,42 +67,34 @@ func (client *Client) subscribeOnMetadata(ctx context.Context) {
 			}
 
 			log.Trace().Str("contract", metadata.Address).Msg("new metadata")
-			client.publisher.Notify(messages.NewMessage(metadataModule.TopicMetadata, metadata))
+			client.Publisher().Notify(messages.NewMessage(metadataModule.TopicMetadata, metadata))
 		}
 	}
 }
 
-// Close -
-func (client *Client) Close() error {
-	if err := client.conn.Close(); err != nil {
-		return err
-	}
-	return nil
-}
-
 // Subscribe -
 func (client *Client) Subscribe(s *messages.Subscriber, topic messages.Topic) {
-	client.publisher.Subscribe(s, topic)
+	client.Publisher().Subscribe(s, topic)
 }
 
 // Unsubscribe -
 func (client *Client) Unsubscribe(s *messages.Subscriber, topic messages.Topic) {
-	client.publisher.Unsubscribe(s, topic)
+	client.Publisher().Unsubscribe(s, topic)
 }
 
 // GetMetadata -
 func (client *Client) GetMetadata(ctx context.Context, address string) (*pb.Metadata, error) {
 	return client.client.GetMetadata(ctx, &pb.GetMetadataRequest{
-		Id:      client.subscriptionID,
+		Id:      client.SubscriptionID,
 		Address: address,
 	})
 }
 
 // ListMetadata -
-func (client *Client) ListMetadata(ctx context.Context, limit, offset uint64, order pb.SortOrder) ([]*pb.Metadata, error) {
+func (client *Client) ListMetadata(ctx context.Context, limit, offset uint64, order generalPB.SortOrder) ([]*pb.Metadata, error) {
 	response, err := client.client.ListMetadata(ctx, &pb.ListMetadataRequest{
-		Id: client.subscriptionID,
-		Page: &pb.Page{
+		Id: client.SubscriptionID,
+		Page: &generalPB.Page{
 			Limit:  limit,
 			Offset: offset,
 			Order:  order,
@@ -149,10 +107,10 @@ func (client *Client) ListMetadata(ctx context.Context, limit, offset uint64, or
 }
 
 // GetMetadataByMethodSinature -
-func (client *Client) GetMetadataByMethodSinature(ctx context.Context, limit, offset uint64, order pb.SortOrder, signature string) ([]*pb.Metadata, error) {
+func (client *Client) GetMetadataByMethodSinature(ctx context.Context, limit, offset uint64, order generalPB.SortOrder, signature string) ([]*pb.Metadata, error) {
 	response, err := client.client.GetMetadataByMethodSinature(ctx, &pb.GetMetadataByMethodSinatureRequest{
-		Id: client.subscriptionID,
-		Page: &pb.Page{
+		Id: client.SubscriptionID,
+		Page: &generalPB.Page{
 			Limit:  limit,
 			Offset: offset,
 			Order:  order,
@@ -166,10 +124,10 @@ func (client *Client) GetMetadataByMethodSinature(ctx context.Context, limit, of
 }
 
 // GetMetadataByTopic -
-func (client *Client) GetMetadataByTopic(ctx context.Context, limit, offset uint64, order pb.SortOrder, topic string) ([]*pb.Metadata, error) {
+func (client *Client) GetMetadataByTopic(ctx context.Context, limit, offset uint64, order generalPB.SortOrder, topic string) ([]*pb.Metadata, error) {
 	response, err := client.client.GetMetadataByTopic(ctx, &pb.GetMetadataByTopicRequest{
-		Id: client.subscriptionID,
-		Page: &pb.Page{
+		Id: client.SubscriptionID,
+		Page: &generalPB.Page{
 			Limit:  limit,
 			Offset: offset,
 			Order:  order,

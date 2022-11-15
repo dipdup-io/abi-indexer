@@ -1,9 +1,6 @@
 package grpc
 
-// ServerConfig -
-type ServerConfig struct {
-	Bind string `yaml:"bind" validate:"required,hostname_port"`
-}
+import "github.com/dipdup-net/indexer-sdk/pkg/modules/grpc"
 
 // ClientConfig -
 type ClientConfig struct {
@@ -18,6 +15,6 @@ type Subscriptions struct {
 
 // Config -
 type Config struct {
-	Server *ServerConfig `yaml:"server" validate:"omitempty"`
-	Client *ClientConfig `yaml:"client" validate:"omitempty"`
+	Server *grpc.ServerConfig `yaml:"server" validate:"omitempty"`
+	Client *ClientConfig      `yaml:"client" validate:"omitempty"`
 }

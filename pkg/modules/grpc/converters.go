@@ -3,6 +3,7 @@ package grpc
 import (
 	"github.com/dipdup-net/abi-indexer/internal/storage"
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb"
+	generalPB "github.com/dipdup-net/indexer-sdk/pkg/modules/grpc/pb"
 )
 
 // Metadata -
@@ -15,19 +16,10 @@ func Metadata(metadata *storage.Metadata) *pb.Metadata {
 }
 
 // HeadRequest -
-func MetadataRequest(id string) *pb.DefaultRequest {
-	request := new(pb.DefaultRequest)
+func MetadataRequest(id string) *generalPB.DefaultRequest {
+	request := new(generalPB.DefaultRequest)
 	request.Id = id
 	return request
-}
-
-// ToMetadataModel -
-func ToMetadataModel(metadata *pb.Metadata) *storage.Metadata {
-	return &storage.Metadata{
-		Contract:   metadata.GetAddress(),
-		Metadata:   metadata.GetMetadata(),
-		JSONSchema: metadata.GetJsonSchema(),
-	}
 }
 
 // ListMetadataResponse -

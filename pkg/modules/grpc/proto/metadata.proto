@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package proto;
 
-option go_package = "modules/grpc/pb";
+option go_package = "github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb";
 
-import "pkg/modules/grpc/proto/general.proto";
+import "github.com/dipdup-net/indexer-sdk/pkg/modules/grpc/proto/general.proto";
 
 service MetadataService {
     rpc SubscribeOnMetadata(DefaultRequest) returns (stream Metadata);

@@ -2,12 +2,13 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.13.0
-// source: pkg/modules/grpc/proto/metadata.proto
+// source: github.com/dipdup-net/abi-indexer/pkg/modules/grpc/proto/metadata.proto
 
 package pb
 
 import (
 	context "context"
+	pb "github.com/dipdup-net/indexer-sdk/pkg/modules/grpc/pb"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -22,8 +23,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MetadataServiceClient interface {
-	SubscribeOnMetadata(ctx context.Context, in *DefaultRequest, opts ...grpc.CallOption) (MetadataService_SubscribeOnMetadataClient, error)
-	UnsubscribeFromMetadata(ctx context.Context, in *DefaultRequest, opts ...grpc.CallOption) (*Message, error)
+	SubscribeOnMetadata(ctx context.Context, in *pb.DefaultRequest, opts ...grpc.CallOption) (MetadataService_SubscribeOnMetadataClient, error)
+	UnsubscribeFromMetadata(ctx context.Context, in *pb.DefaultRequest, opts ...grpc.CallOption) (*pb.Message, error)
 	GetMetadata(ctx context.Context, in *GetMetadataRequest, opts ...grpc.CallOption) (*Metadata, error)
 	ListMetadata(ctx context.Context, in *ListMetadataRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error)
 	GetMetadataByMethodSinature(ctx context.Context, in *GetMetadataByMethodSinatureRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error)
@@ -38,7 +39,7 @@ func NewMetadataServiceClient(cc grpc.ClientConnInterface) MetadataServiceClient
 	return &metadataServiceClient{cc}
 }
 
-func (c *metadataServiceClient) SubscribeOnMetadata(ctx context.Context, in *DefaultRequest, opts ...grpc.CallOption) (MetadataService_SubscribeOnMetadataClient, error) {
+func (c *metadataServiceClient) SubscribeOnMetadata(ctx context.Context, in *pb.DefaultRequest, opts ...grpc.CallOption) (MetadataService_SubscribeOnMetadataClient, error) {
 	stream, err := c.cc.NewStream(ctx, &MetadataService_ServiceDesc.Streams[0], "/proto.MetadataService/SubscribeOnMetadata", opts...)
 	if err != nil {
 		return nil, err
@@ -70,8 +71,8 @@ func (x *metadataServiceSubscribeOnMetadataClient) Recv() (*Metadata, error) {
 	return m, nil
 }
 
-func (c *metadataServiceClient) UnsubscribeFromMetadata(ctx context.Context, in *DefaultRequest, opts ...grpc.CallOption) (*Message, error) {
-	out := new(Message)
+func (c *metadataServiceClient) UnsubscribeFromMetadata(ctx context.Context, in *pb.DefaultRequest, opts ...grpc.CallOption) (*pb.Message, error) {
+	out := new(pb.Message)
 	err := c.cc.Invoke(ctx, "/proto.MetadataService/UnsubscribeFromMetadata", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -119,8 +120,8 @@ func (c *metadataServiceClient) GetMetadataByTopic(ctx context.Context, in *GetM
 // All implementations must embed UnimplementedMetadataServiceServer
 // for forward compatibility
 type MetadataServiceServer interface {
-	SubscribeOnMetadata(*DefaultRequest, MetadataService_SubscribeOnMetadataServer) error
-	UnsubscribeFromMetadata(context.Context, *DefaultRequest) (*Message, error)
+	SubscribeOnMetadata(*pb.DefaultRequest, MetadataService_SubscribeOnMetadataServer) error
+	UnsubscribeFromMetadata(context.Context, *pb.DefaultRequest) (*pb.Message, error)
 	GetMetadata(context.Context, *GetMetadataRequest) (*Metadata, error)
 	ListMetadata(context.Context, *ListMetadataRequest) (*ListMetadataResponse, error)
 	GetMetadataByMethodSinature(context.Context, *GetMetadataByMethodSinatureRequest) (*ListMetadataResponse, error)
@@ -132,10 +133,10 @@ type MetadataServiceServer interface {
 type UnimplementedMetadataServiceServer struct {
 }
 
-func (UnimplementedMetadataServiceServer) SubscribeOnMetadata(*DefaultRequest, MetadataService_SubscribeOnMetadataServer) error {
+func (UnimplementedMetadataServiceServer) SubscribeOnMetadata(*pb.DefaultRequest, MetadataService_SubscribeOnMetadataServer) error {
 	return status.Errorf(codes.Unimplemented, "method SubscribeOnMetadata not implemented")
 }
-func (UnimplementedMetadataServiceServer) UnsubscribeFromMetadata(context.Context, *DefaultRequest) (*Message, error) {
+func (UnimplementedMetadataServiceServer) UnsubscribeFromMetadata(context.Context, *pb.DefaultRequest) (*pb.Message, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnsubscribeFromMetadata not implemented")
 }
 func (UnimplementedMetadataServiceServer) GetMetadata(context.Context, *GetMetadataRequest) (*Metadata, error) {
@@ -164,7 +165,7 @@ func RegisterMetadataServiceServer(s grpc.ServiceRegistrar, srv MetadataServiceS
 }
 
 func _MetadataService_SubscribeOnMetadata_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(DefaultRequest)
+	m := new(pb.DefaultRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
@@ -185,7 +186,7 @@ func (x *metadataServiceSubscribeOnMetadataServer) Send(m *Metadata) error {
 }
 
 func _MetadataService_UnsubscribeFromMetadata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DefaultRequest)
+	in := new(pb.DefaultRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -197,7 +198,7 @@ func _MetadataService_UnsubscribeFromMetadata_Handler(srv interface{}, ctx conte
 		FullMethod: "/proto.MetadataService/UnsubscribeFromMetadata",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MetadataServiceServer).UnsubscribeFromMetadata(ctx, req.(*DefaultRequest))
+		return srv.(MetadataServiceServer).UnsubscribeFromMetadata(ctx, req.(*pb.DefaultRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -309,5 +310,5 @@ var MetadataService_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "pkg/modules/grpc/proto/metadata.proto",
+	Metadata: "github.com/dipdup-net/abi-indexer/pkg/modules/grpc/proto/metadata.proto",
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/dipdup-net/abi-indexer/internal/storage"
 	"github.com/dipdup-net/abi-indexer/internal/storage/postgres"
 	"github.com/dipdup-net/abi-indexer/internal/vm"
-	"github.com/dipdup-net/indexer-sdk/messages"
+	"github.com/dipdup-net/indexer-sdk/pkg/messages"
 	"github.com/dipdup-net/workerpool"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
