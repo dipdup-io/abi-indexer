@@ -23,10 +23,8 @@ github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 h1:YLtO71vCjJRCBcrPMtQ9nqBsqpA1
 github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1/go.mod h1:hyedUtir6IdtD/7lIxGeCxkaw7y45JueMRL4DIyJDKs=
 github.com/dipdup-net/go-lib v0.2.22 h1:VDo6Atzl7OkXHI6H15NpZB8sIv/+mzK1JGRYEVs+gH8=
 github.com/dipdup-net/go-lib v0.2.22/go.mod h1:RCYx6FV8+7qQkC1dCP8zn8WTlsFRXXx/D4N+2mw1GJg=
-github.com/dipdup-net/indexer-sdk v0.0.0-20221115143510-66d75ce98c89 h1:6oCks2tZpm8/aef//WAkGLDCKuYchGSNyja7/hQ+jdE=
-github.com/dipdup-net/indexer-sdk v0.0.0-20221115143510-66d75ce98c89/go.mod h1:VY/In/QwdceBOax3D+wssKsCHlq8rnT3EUD/F5wMWnM=
-github.com/dipdup-net/indexer-sdk v0.0.0-20221115181128-c4ca2f2731ae h1:muCitSGgn1pHyJNLC5mGcYhczc96k0+TQAvk1NWsOE4=
-github.com/dipdup-net/indexer-sdk v0.0.0-20221115181128-c4ca2f2731ae/go.mod h1:VY/In/QwdceBOax3D+wssKsCHlq8rnT3EUD/F5wMWnM=
+github.com/dipdup-net/indexer-sdk v0.0.0-20221115212726-403e06b62dd3 h1:G3r87QAC6rDN+8Bp8GRLUAmOaXPwohWYtJtPC74iptE=
+github.com/dipdup-net/indexer-sdk v0.0.0-20221115212726-403e06b62dd3/go.mod h1:VY/In/QwdceBOax3D+wssKsCHlq8rnT3EUD/F5wMWnM=
 github.com/dipdup-net/sourcify-api v0.0.2 h1:OXyWmtg/Kxxi1ekrbPZ3X80H8gQapdylHk7xT+R861k=
 github.com/dipdup-net/sourcify-api v0.0.2/go.mod h1:xsnXeL+qKfDfHya8tV8pGyI+3evH7cFGjE1q0mdkEM8=
 github.com/dipdup-net/workerpool v0.0.1 h1:Ixx1y3MxFrRAjcw29vxpoTFwbgs7XhA+wGWH9HVtePo=

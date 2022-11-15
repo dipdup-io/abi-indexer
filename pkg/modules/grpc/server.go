@@ -47,6 +47,8 @@ func NewServer(cfg *grpc.ServerConfig, pg postgres.Storage) (*Server, error) {
 
 // Start -
 func (server *Server) Start(ctx context.Context) {
+	pb.RegisterMetadataServiceServer(server.Server.Server(), server)
+
 	server.Server.Start(ctx)
 
 	server.wg.Add(1)
