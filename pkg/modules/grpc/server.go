@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/dipdup-net/abi-indexer/internal/storage"
-	"github.com/dipdup-net/abi-indexer/internal/storage/postgres"
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb"
 	"github.com/dipdup-net/indexer-sdk/pkg/modules/grpc"
 	generalPB "github.com/dipdup-net/indexer-sdk/pkg/modules/grpc/pb"
@@ -20,14 +19,14 @@ type Server struct {
 	*grpc.Server
 	pb.UnimplementedMetadataServiceServer
 
-	storage               postgres.Storage
+	metadata              storage.IMetadata
 	metadataSubscriptions *grpc.Subscriptions[*storage.Metadata, *pb.Metadata]
 
 	wg *sync.WaitGroup
 }
 
 // NewServer -
-func NewServer(cfg *grpc.ServerConfig, pg postgres.Storage) (*Server, error) {
+func NewServer(cfg *grpc.ServerConfig, metadata storage.IMetadata) (*Server, error) {
 	if cfg == nil {
 		return nil, errors.New("configuration structure of gRPC server is nil")
 	}
@@ -39,7 +38,7 @@ func NewServer(cfg *grpc.ServerConfig, pg postgres.Storage) (*Server, error) {
 
 	return &Server{
 		Server:                server,
-		storage:               pg,
+		metadata:              metadata,
 		metadataSubscriptions: grpc.NewSubscriptions[*storage.Metadata, *pb.Metadata](),
 		wg:                    new(sync.WaitGroup),
 	}, nil
@@ -127,7 +126,7 @@ func (server *Server) GetMetadata(ctx context.Context, req *pb.GetMetadataReques
 	reqCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 
-	metadata, err := server.storage.Metadata.GetByAddress(reqCtx, req.Address)
+	metadata, err := server.metadata.GetByAddress(reqCtx, req.Address)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +138,7 @@ func (server *Server) GetMetadata(ctx context.Context, req *pb.GetMetadataReques
 func (server *Server) ListMetadata(ctx context.Context, req *pb.ListMetadataRequest) (*pb.ListMetadataResponse, error) {
 	p := newPage(req.GetPage())
 
-	metadata, err := server.storage.Metadata.List(ctx, p.limit, p.offset, p.order)
+	metadata, err := server.metadata.List(ctx, p.limit, p.offset, p.order)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +150,7 @@ func (server *Server) ListMetadata(ctx context.Context, req *pb.ListMetadataRequ
 func (server *Server) GetMetadataByMethodSinature(ctx context.Context, req *pb.GetMetadataByMethodSinatureRequest) (*pb.ListMetadataResponse, error) {
 	p := newPage(req.GetPage())
 
-	metadata, err := server.storage.Metadata.GetByMethod(ctx, req.Signature, p.limit, p.offset, p.order)
+	metadata, err := server.metadata.GetByMethod(ctx, req.Signature, p.limit, p.offset, p.order)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +162,7 @@ func (server *Server) GetMetadataByMethodSinature(ctx context.Context, req *pb.G
 func (server *Server) GetMetadataByTopic(ctx context.Context, req *pb.GetMetadataByTopicRequest) (*pb.ListMetadataResponse, error) {
 	p := newPage(req.GetPage())
 
-	metadata, err := server.storage.Metadata.GetByTopic(ctx, req.Topic, p.limit, p.offset, p.order)
+	metadata, err := server.metadata.GetByTopic(ctx, req.Topic, p.limit, p.offset, p.order)
 	if err != nil {
 		return nil, err
 	}

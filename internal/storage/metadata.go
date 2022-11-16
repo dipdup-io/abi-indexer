@@ -1,14 +1,18 @@
 package storage
 
-import "context"
+import (
+	"context"
+
+	"github.com/dipdup-net/indexer-sdk/pkg/storage"
+)
 
 // IMetadata -
 type IMetadata interface {
-	Table[*Metadata]
+	storage.Table[*Metadata]
 
 	GetByAddress(ctx context.Context, address string) (*Metadata, error)
-	GetByMethod(ctx context.Context, signature string, limit, offset uint64, order SortOrder) ([]*Metadata, error)
-	GetByTopic(ctx context.Context, topic string, limit, offset uint64, order SortOrder) ([]*Metadata, error)
+	GetByMethod(ctx context.Context, signature string, limit, offset uint64, order storage.SortOrder) ([]*Metadata, error)
+	GetByTopic(ctx context.Context, topic string, limit, offset uint64, order storage.SortOrder) ([]*Metadata, error)
 }
 
 // Metadata -

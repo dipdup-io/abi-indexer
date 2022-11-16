@@ -1,8 +1,10 @@
 package storage
 
+import "github.com/dipdup-net/indexer-sdk/pkg/storage"
+
 // IMethod -
 type IMethod interface {
-	Table[*Method]
+	storage.Table[*Method]
 }
 
 // Method -

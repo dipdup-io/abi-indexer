@@ -2,44 +2,39 @@ package postgres
 
 import (
 	"context"
-	"errors"
 	"strings"
-	"time"
 
-	"github.com/dipdup-net/abi-indexer/internal/storage"
+	models "github.com/dipdup-net/abi-indexer/internal/storage"
 	"github.com/dipdup-net/go-lib/config"
 	"github.com/dipdup-net/go-lib/database"
+	"github.com/dipdup-net/indexer-sdk/pkg/storage"
+	"github.com/dipdup-net/indexer-sdk/pkg/storage/postgres"
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 )
 
+// Storage -
+type Storage struct {
+	*postgres.Storage
+
+	Metadata models.IMetadata
+	Methods  models.IMethod
+	Events   models.IEvent
+}
+
 // Create -
-func Create(ctx context.Context, cfg config.Database) (Storage, error) {
-	conn := database.NewPgGo()
-
-	connectCtx, cancel := context.WithTimeout(ctx, time.Second*10)
-	defer cancel()
-
-	if err := conn.Connect(connectCtx, cfg); err != nil {
-		return Storage{}, err
+func Create(ctx context.Context, cfg config.Database) (*Storage, error) {
+	strg, err := postgres.Create(ctx, cfg, initDatabase)
+	if err != nil {
+		return nil, nil
 	}
 
-	database.Wait(ctx, conn, time.Second*5)
-
-	conn.DB().AddQueryHook(&logQueryHook{})
-
-	if err := initDatabase(ctx, conn); err != nil {
-		return Storage{}, err
-	}
-
-	s := Storage{
-		Metadata: NewMetadata(conn),
-		Methods:  NewMethods(conn),
-		Events:   NewEvents(conn),
-		db:       conn,
-	}
-
-	return s, nil
+	return &Storage{
+		Storage:  strg,
+		Metadata: NewMetadata(strg.Connection()),
+		Events:   NewEvents(strg.Connection()),
+		Methods:  NewMethods(strg.Connection()),
+	}, nil
 }
 
 func initDatabase(ctx context.Context, conn *database.PgGo) error {
@@ -60,7 +55,7 @@ func initDatabase(ctx context.Context, conn *database.PgGo) error {
 	}
 
 	for _, data := range []storage.Model{
-		&storage.Metadata{}, &storage.Method{}, &storage.Event{},
+		&models.Metadata{}, &models.Method{}, &models.Event{},
 	} {
 		if err := conn.DB().WithContext(ctx).Model(data).CreateTable(&orm.CreateTableOptions{
 			IfNotExists: true,
@@ -105,9 +100,4 @@ func createIndices(ctx context.Context, conn *database.PgGo) error {
 
 		return nil
 	})
-}
-
-// IsNoRows -
-func IsNoRows(err error) bool {
-	return errors.Is(err, pg.ErrNoRows)
 }

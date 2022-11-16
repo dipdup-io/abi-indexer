@@ -53,14 +53,14 @@ func main() {
 		cancel()
 		return
 	}
-	metadataIndexer, err := metadata.NewMetadata(cfg.Metadata, storage)
+	metadataIndexer, err := metadata.NewMetadata(cfg.Metadata, storage.Metadata, storage.Events, storage.Methods, storage.Transactable)
 	if err != nil {
 		log.Panic().Err(err).Msg("creating indexer")
 		cancel()
 		return
 	}
 
-	grpcModule, err := grpc.NewServer(cfg.GRPC.Server, storage)
+	grpcModule, err := grpc.NewServer(cfg.GRPC.Server, storage.Metadata)
 	if err != nil {
 		log.Panic().Err(err).Msg("creating grpc module")
 		cancel()

@@ -1,8 +1,10 @@
 package storage
 
+import "github.com/dipdup-net/indexer-sdk/pkg/storage"
+
 // IEvent -
 type IEvent interface {
-	Table[*Event]
+	storage.Table[*Event]
 }
 
 // Event -

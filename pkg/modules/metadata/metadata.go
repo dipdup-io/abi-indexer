@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/dipdup-net/abi-indexer/internal/sources"
-	"github.com/dipdup-net/abi-indexer/internal/storage"
-	"github.com/dipdup-net/abi-indexer/internal/storage/postgres"
+	models "github.com/dipdup-net/abi-indexer/internal/storage"
+
 	"github.com/dipdup-net/abi-indexer/internal/vm"
 	"github.com/dipdup-net/indexer-sdk/pkg/messages"
+	"github.com/dipdup-net/indexer-sdk/pkg/storage"
 	"github.com/dipdup-net/workerpool"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -21,15 +22,26 @@ const (
 // Metadata -
 type Metadata struct {
 	publisher *messages.Publisher
-	storage   postgres.Storage
-	source    sources.Source
-	vmType    vm.Type
+
+	repo         models.IMetadata
+	events       models.IEvent
+	methods      models.IMethod
+	transactable storage.Transactable
+
+	source sources.Source
+	vmType vm.Type
 
 	pool *workerpool.TimedPool[string]
 }
 
 // NewMetadata -
-func NewMetadata(cfg Config, pg postgres.Storage) (*Metadata, error) {
+func NewMetadata(
+	cfg Config,
+	metadataRepo models.IMetadata,
+	events models.IEvent,
+	methods models.IMethod,
+	transactable storage.Transactable,
+) (*Metadata, error) {
 	src, err := sources.Factory(cfg.SourceType, sources.FactoryParams{
 		Sourcify: cfg.Sourcify,
 		FS:       cfg.FS,
@@ -43,10 +55,13 @@ func NewMetadata(cfg Config, pg postgres.Storage) (*Metadata, error) {
 	}
 
 	metadata := &Metadata{
-		storage:   pg,
-		source:    src,
-		vmType:    cfg.VM.Type,
-		publisher: messages.NewPublisher(),
+		repo:         metadataRepo,
+		methods:      methods,
+		events:       events,
+		transactable: transactable,
+		source:       src,
+		vmType:       cfg.VM.Type,
+		publisher:    messages.NewPublisher(),
 	}
 
 	metadata.pool = workerpool.NewTimedPool(
@@ -79,11 +94,11 @@ func (metadata *Metadata) worker(ctx context.Context, task string) {
 }
 
 func (metadata *Metadata) processData(ctx context.Context, address string) error {
-	_, err := metadata.storage.Metadata.GetByAddress(ctx, address)
+	_, err := metadata.repo.GetByAddress(ctx, address)
 	switch {
 	case err == nil:
 		return nil
-	case !postgres.IsNoRows(err):
+	case !metadata.repo.IsNoRows(err):
 		return err
 	}
 
@@ -94,7 +109,7 @@ func (metadata *Metadata) processData(ctx context.Context, address string) error
 		return errors.Wrap(err, address)
 	}
 
-	model := storage.Metadata{
+	model := models.Metadata{
 		Contract: address,
 		Metadata: data,
 	}
@@ -130,8 +145,8 @@ func (metadata *Metadata) processData(ctx context.Context, address string) error
 	return nil
 }
 
-func (metadata *Metadata) save(ctx context.Context, model storage.Metadata, methods []storage.Method, events []storage.Event) error {
-	tx, err := metadata.storage.BeginTransaction()
+func (metadata *Metadata) save(ctx context.Context, model models.Metadata, methods []models.Method, events []models.Event) error {
+	tx, err := metadata.transactable.BeginTransaction(ctx)
 	if err != nil {
 		return err
 	}
@@ -143,7 +158,7 @@ func (metadata *Metadata) save(ctx context.Context, model storage.Metadata, meth
 	}()
 
 	if err := tx.Add(ctx, &model); err != nil {
-		return storage.ProcessTransactionError(ctx, err, tx)
+		return tx.HandleError(ctx, err)
 	}
 
 	if len(methods) > 0 {
@@ -154,7 +169,7 @@ func (metadata *Metadata) save(ctx context.Context, model storage.Metadata, meth
 		}
 
 		if err := tx.BulkSave(ctx, data); err != nil {
-			return storage.ProcessTransactionError(ctx, err, tx)
+			return tx.HandleError(ctx, err)
 		}
 	}
 
@@ -166,7 +181,7 @@ func (metadata *Metadata) save(ctx context.Context, model storage.Metadata, meth
 		}
 
 		if err := tx.BulkSave(ctx, data); err != nil {
-			return storage.ProcessTransactionError(ctx, err, tx)
+			return tx.HandleError(ctx, err)
 		}
 	}
 

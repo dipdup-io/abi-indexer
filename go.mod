@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/dipdup-net/go-lib v0.2.22
-	github.com/dipdup-net/indexer-sdk v0.0.0-20221115212726-403e06b62dd3
+	github.com/dipdup-net/indexer-sdk v0.0.0-20221116120616-3a7f1c2547c3
 	github.com/dipdup-net/sourcify-api v0.0.2
 	github.com/dipdup-net/workerpool v0.0.1
 	github.com/ethereum/go-ethereum v1.10.26

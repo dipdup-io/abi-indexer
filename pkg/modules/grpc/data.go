@@ -1,8 +1,8 @@
 package grpc
 
 import (
-	"github.com/dipdup-net/abi-indexer/internal/storage"
 	"github.com/dipdup-net/indexer-sdk/pkg/modules/grpc/pb"
+	"github.com/dipdup-net/indexer-sdk/pkg/storage"
 )
 
 type page struct {
