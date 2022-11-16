@@ -13,3 +13,6 @@ build-proto:
 
 build:
 	docker-compose up -d --build
+
+lint:
+	golangci-lint run
