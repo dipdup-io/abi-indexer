@@ -15,8 +15,8 @@ import (
 )
 
 // topics
-const (
-	TopicMetadata messages.Topic = "metadata"
+var (
+	TopicMetadata messages.SubscriptionID = "metadata"
 )
 
 // Metadata -
@@ -200,11 +200,11 @@ func (metadata *Metadata) Close() error {
 }
 
 // Subscribe -
-func (metadata *Metadata) Subscribe(s *messages.Subscriber, topic messages.Topic) {
-	metadata.publisher.Subscribe(s, topic)
+func (metadata *Metadata) Subscribe(s *messages.Subscriber) {
+	metadata.publisher.Subscribe(s, TopicMetadata)
 }
 
 // Unsubscribe -
-func (metadata *Metadata) Unsubscribe(s *messages.Subscriber, topic messages.Topic) {
-	metadata.publisher.Unsubscribe(s, topic)
+func (metadata *Metadata) Unsubscribe(s *messages.Subscriber) {
+	metadata.publisher.Unsubscribe(s, TopicMetadata)
 }

@@ -7,13 +7,13 @@ import (
 
 // MetadataSubscription -
 type MetadataSubscription struct {
-	data chan *pb.Metadata
+	data chan *pb.SubscriptionMetadata
 }
 
 // NewMetadataSubscription -
 func NewMetadataSubscription() *MetadataSubscription {
 	return &MetadataSubscription{
-		data: make(chan *pb.Metadata, 1024),
+		data: make(chan *pb.SubscriptionMetadata, 1024),
 	}
 }
 
@@ -23,7 +23,7 @@ func (m *MetadataSubscription) Filter(*storage.Metadata) bool {
 }
 
 // Send -
-func (m *MetadataSubscription) Send(data *pb.Metadata) {
+func (m *MetadataSubscription) Send(data *pb.SubscriptionMetadata) {
 	m.data <- data
 }
 
@@ -34,6 +34,6 @@ func (m *MetadataSubscription) Close() error {
 }
 
 // Listen -
-func (m *MetadataSubscription) Listen() <-chan *pb.Metadata {
+func (m *MetadataSubscription) Listen() <-chan *pb.SubscriptionMetadata {
 	return m.data
 }

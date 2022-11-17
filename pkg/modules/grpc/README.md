@@ -4,32 +4,13 @@ Metadata gRPC API exposes on 7778 port. Link to [proto file](/pkg/modules/grpc/p
 
 ## Endpoints
 
-First of all you have to handshake with the server. `HelloService` is responsible for it.
-
-```protobuf
-service HelloService {
-    rpc Hello(HelloRequest) returns (HelloResponse);
-}
-
-```
-
-* `Hello` - handshake endpoint which requests personal identity for subscriber. It has to be called first. Personal identity will be used in others requests.
-
-```protobuf
-message HelloRequest {}
-
-message HelloResponse {
-    string id = 1;
-}
-```
-
 
 Metadata service implements following endpoints:
 
 ```protobuf
 service MetadataService {
-    rpc SubscribeOnMetadata(DefaultRequest) returns (stream Metadata);
-    rpc UnsubscribeFromMetadata(DefaultRequest) returns (Message);
+    rpc SubscribeOnMetadata(DefaultRequest) returns (stream SubscriptionMetadata);
+    rpc UnsubscribeFromMetadata(UnsubscribeRequest) returns (UnsubscribeResponse);
 
     rpc GetMetadata(GetMetadataRequest) returns (Metadata);
     rpc ListMetadata(ListMetadataRequest) returns (ListMetadataResponse);
@@ -41,11 +22,19 @@ service MetadataService {
 * `SubscribeOnMetadata` - subscribes on new metadata receiving events.
 
 ```protobuf
-message DefaultRequest {
-    string id = 1;
-}
+message DefaultRequest {}
 
 // stream of Metadata
+
+message SubscriptionMetadata {
+    SubscribeResponse subscription = 1;
+    Metadata metadata = 2;
+}
+
+message SubscribeResponse {
+    uint64 id = 1;
+}
+
 message Metadata {
     string address = 1;
     bytes metadata = 2;
@@ -57,8 +46,13 @@ message Metadata {
 * `UnsubscribeFromMetadata` - unsubscribes from metadata stream
 
 ```protobuf
-message DefaultRequest {
-    string id = 1;
+message UnsubscribeRequest {
+    uint64 id = 1;
+}
+
+message UnsubscribeResponse {
+    uint64 id = 1;
+    Message response = 2;
 }
 message Message {
     string message = 1;
@@ -69,8 +63,7 @@ message Message {
 
 ```protobuf
 message GetMetadataRequest {
-    string id = 1;
-    string address = 2;
+    string address = 1;
 }
 message Metadata {
     string address = 1;
@@ -94,8 +87,7 @@ message Page {
 }
 
 message ListMetadataRequest {
-    string id = 1;
-    Page page = 2;
+    Page page = 1;
 }
 
 message ListMetadataResponse {
@@ -107,9 +99,8 @@ message ListMetadataResponse {
 
 ```protobuf
 message GetMetadataByMethodSinatureRequest {
-    string id = 1;
-    Page page = 2;
-    string signature = 3;
+    Page page = 1;
+    string signature = 2;
 }
 ```
 
@@ -118,9 +109,8 @@ message GetMetadataByMethodSinatureRequest {
 
 ```protobuf
 message GetMetadataByTopicRequest {
-    string id = 1;
-    Page page = 2;
-    string topic = 3;
+    Page page = 1;
+    string topic = 2;
 }
 ``` 
 
@@ -152,31 +142,37 @@ To create client module write the following code:
 
 ```go
 grpcClient := grpc.NewClient(cfg.GRPC.Client)                       // create module
-grpcClient.Subscribe(yourModule.Subscriber, messages.TopicMetadata) // subscribe on internal events
 
 if err := grpcClient.Connect(ctx); err != nil {                     // create connection to server
-    log.Panic().Err(err).Msg("GetMetadata")
-    cancel()
+    log.Panic().Err(err).Msg("Connect")
     return
 }
 
-grpcClient.Start(ctx)                                               // listening for server events
+grpcClient.Start(ctx)                                                          // listening for server events
+id, err := grpcClient.SubscribeOnMetadata(ctx, yourModule.Subscriber)          // subscribe on internal events. retruns subscription id which required on unsubscribe.
+if err != nil {
+    log.Panic().Err(err).Msg("SubscribeOnMetadata")
+    return
+}
 
 data, err := grpcClient.GetMetadata(ctx, "0x...")                   // receiving metadata by gRPC
 if err != nil {
     log.Panic().Err(err).Msg("GetMetadata")
-    cancel()
     return
 }
 
 data, err := grpcClient.ListMetadata(ctx, 10, 0, pb.SortOrder_ASC)  // receiving list metadata by gRPC
 if err != nil {
     log.Panic().Err(err).Msg("ListMetadata")
-    cancel()
     return
 }
 
 // your code here
+
+if err := grpcClient.UnsubscribeFromMetadata(ctx, yourModule.Subscriber, id); err != nil {
+    log.Panic().Err(err).Msg("UnsubscribeFromMetadata")
+    return
+}
 
 if err := grpcClient.Close(); err != nil {
 	log.Panic().Err(err).Msg("closing grpc client")

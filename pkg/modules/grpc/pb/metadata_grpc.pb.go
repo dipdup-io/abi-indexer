@@ -24,7 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MetadataServiceClient interface {
 	SubscribeOnMetadata(ctx context.Context, in *pb.DefaultRequest, opts ...grpc.CallOption) (MetadataService_SubscribeOnMetadataClient, error)
-	UnsubscribeFromMetadata(ctx context.Context, in *pb.DefaultRequest, opts ...grpc.CallOption) (*pb.Message, error)
+	UnsubscribeFromMetadata(ctx context.Context, in *pb.UnsubscribeRequest, opts ...grpc.CallOption) (*pb.UnsubscribeResponse, error)
 	GetMetadata(ctx context.Context, in *GetMetadataRequest, opts ...grpc.CallOption) (*Metadata, error)
 	ListMetadata(ctx context.Context, in *ListMetadataRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error)
 	GetMetadataByMethodSinature(ctx context.Context, in *GetMetadataByMethodSinatureRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error)
@@ -55,7 +55,7 @@ func (c *metadataServiceClient) SubscribeOnMetadata(ctx context.Context, in *pb.
 }
 
 type MetadataService_SubscribeOnMetadataClient interface {
-	Recv() (*Metadata, error)
+	Recv() (*SubscriptionMetadata, error)
 	grpc.ClientStream
 }
 
@@ -63,16 +63,16 @@ type metadataServiceSubscribeOnMetadataClient struct {
 	grpc.ClientStream
 }
 
-func (x *metadataServiceSubscribeOnMetadataClient) Recv() (*Metadata, error) {
-	m := new(Metadata)
+func (x *metadataServiceSubscribeOnMetadataClient) Recv() (*SubscriptionMetadata, error) {
+	m := new(SubscriptionMetadata)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *metadataServiceClient) UnsubscribeFromMetadata(ctx context.Context, in *pb.DefaultRequest, opts ...grpc.CallOption) (*pb.Message, error) {
-	out := new(pb.Message)
+func (c *metadataServiceClient) UnsubscribeFromMetadata(ctx context.Context, in *pb.UnsubscribeRequest, opts ...grpc.CallOption) (*pb.UnsubscribeResponse, error) {
+	out := new(pb.UnsubscribeResponse)
 	err := c.cc.Invoke(ctx, "/proto.MetadataService/UnsubscribeFromMetadata", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (c *metadataServiceClient) GetMetadataByTopic(ctx context.Context, in *GetM
 // for forward compatibility
 type MetadataServiceServer interface {
 	SubscribeOnMetadata(*pb.DefaultRequest, MetadataService_SubscribeOnMetadataServer) error
-	UnsubscribeFromMetadata(context.Context, *pb.DefaultRequest) (*pb.Message, error)
+	UnsubscribeFromMetadata(context.Context, *pb.UnsubscribeRequest) (*pb.UnsubscribeResponse, error)
 	GetMetadata(context.Context, *GetMetadataRequest) (*Metadata, error)
 	ListMetadata(context.Context, *ListMetadataRequest) (*ListMetadataResponse, error)
 	GetMetadataByMethodSinature(context.Context, *GetMetadataByMethodSinatureRequest) (*ListMetadataResponse, error)
@@ -136,7 +136,7 @@ type UnimplementedMetadataServiceServer struct {
 func (UnimplementedMetadataServiceServer) SubscribeOnMetadata(*pb.DefaultRequest, MetadataService_SubscribeOnMetadataServer) error {
 	return status.Errorf(codes.Unimplemented, "method SubscribeOnMetadata not implemented")
 }
-func (UnimplementedMetadataServiceServer) UnsubscribeFromMetadata(context.Context, *pb.DefaultRequest) (*pb.Message, error) {
+func (UnimplementedMetadataServiceServer) UnsubscribeFromMetadata(context.Context, *pb.UnsubscribeRequest) (*pb.UnsubscribeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnsubscribeFromMetadata not implemented")
 }
 func (UnimplementedMetadataServiceServer) GetMetadata(context.Context, *GetMetadataRequest) (*Metadata, error) {
@@ -173,7 +173,7 @@ func _MetadataService_SubscribeOnMetadata_Handler(srv interface{}, stream grpc.S
 }
 
 type MetadataService_SubscribeOnMetadataServer interface {
-	Send(*Metadata) error
+	Send(*SubscriptionMetadata) error
 	grpc.ServerStream
 }
 
@@ -181,12 +181,12 @@ type metadataServiceSubscribeOnMetadataServer struct {
 	grpc.ServerStream
 }
 
-func (x *metadataServiceSubscribeOnMetadataServer) Send(m *Metadata) error {
+func (x *metadataServiceSubscribeOnMetadataServer) Send(m *SubscriptionMetadata) error {
 	return x.ServerStream.SendMsg(m)
 }
 
 func _MetadataService_UnsubscribeFromMetadata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(pb.DefaultRequest)
+	in := new(pb.UnsubscribeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -198,7 +198,7 @@ func _MetadataService_UnsubscribeFromMetadata_Handler(srv interface{}, ctx conte
 		FullMethod: "/proto.MetadataService/UnsubscribeFromMetadata",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MetadataServiceServer).UnsubscribeFromMetadata(ctx, req.(*pb.DefaultRequest))
+		return srv.(MetadataServiceServer).UnsubscribeFromMetadata(ctx, req.(*pb.UnsubscribeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

@@ -7,8 +7,8 @@ option go_package = "github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb";
 import "github.com/dipdup-net/indexer-sdk/pkg/modules/grpc/proto/general.proto";
 
 service MetadataService {
-    rpc SubscribeOnMetadata(DefaultRequest) returns (stream Metadata);
-    rpc UnsubscribeFromMetadata(DefaultRequest) returns (Message);
+    rpc SubscribeOnMetadata(DefaultRequest) returns (stream SubscriptionMetadata);
+    rpc UnsubscribeFromMetadata(UnsubscribeRequest) returns (UnsubscribeResponse);
 
     rpc GetMetadata(GetMetadataRequest) returns (Metadata);
     rpc ListMetadata(ListMetadataRequest) returns (ListMetadataResponse);
@@ -17,17 +17,20 @@ service MetadataService {
 }
 
 message GetMetadataRequest {
-    string id = 1;
-    string address = 2;
+    string address = 1;
 }
 
 message ListMetadataRequest {
-    string id = 1;
-    Page page = 2;
+    Page page = 1;
 }
 
 message ListMetadataResponse {
     repeated Metadata metadata = 1;
+}
+
+message SubscriptionMetadata {
+    SubscribeResponse subscription = 1;
+    Metadata metadata = 2;
 }
 
 message Metadata {
@@ -37,13 +40,11 @@ message Metadata {
 }
 
 message GetMetadataByMethodSinatureRequest {
-    string id = 1;
-    Page page = 2;
-    string signature = 3;
+    Page page = 1;
+    string signature = 2;
 }
 
 message GetMetadataByTopicRequest {
-    string id = 1;
-    Page page = 2;
-    string topic = 3;
+    Page page = 1;
+    string topic = 2;
 }

@@ -3,7 +3,6 @@ package grpc
 import (
 	"context"
 	"errors"
-	"io"
 	"sync"
 	"time"
 
@@ -20,7 +19,7 @@ type Server struct {
 	pb.UnimplementedMetadataServiceServer
 
 	metadata              storage.IMetadata
-	metadataSubscriptions *grpc.Subscriptions[*storage.Metadata, *pb.Metadata]
+	metadataSubscriptions *grpc.Subscriptions[*storage.Metadata, *pb.SubscriptionMetadata]
 
 	wg *sync.WaitGroup
 }
@@ -39,7 +38,7 @@ func NewServer(cfg *grpc.ServerConfig, metadata storage.IMetadata) (*Server, err
 	return &Server{
 		Server:                server,
 		metadata:              metadata,
-		metadataSubscriptions: grpc.NewSubscriptions[*storage.Metadata, *pb.Metadata](),
+		metadataSubscriptions: grpc.NewSubscriptions[*storage.Metadata, *pb.SubscriptionMetadata](),
 		wg:                    new(sync.WaitGroup),
 	}, nil
 }
@@ -57,19 +56,14 @@ func (server *Server) Start(ctx context.Context) {
 func (server *Server) listen(ctx context.Context) {
 	defer server.wg.Done()
 
-	ticker := time.NewTicker(time.Second * 15)
-	defer ticker.Stop()
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
-
 		case msg := <-server.Listen():
 			switch typedMsg := msg.Data().(type) {
 			case storage.Metadata:
-				server.metadataSubscriptions.NotifyAll(&typedMsg, Metadata(&typedMsg))
+				server.metadataSubscriptions.NotifyAll(&typedMsg, SubscriptionMetadata)
 			default:
 				log.Warn().Msgf("unknown message type: %T", typedMsg)
 			}
@@ -88,41 +82,20 @@ func (server *Server) Close() error {
 
 // SubscribeOnMetadata -
 func (server *Server) SubscribeOnMetadata(req *generalPB.DefaultRequest, stream pb.MetadataService_SubscribeOnMetadataServer) error {
-	subscription := NewMetadataSubscription()
-	server.metadataSubscriptions.Add(req.Id, subscription)
-
-	for {
-		select {
-		case <-stream.Context().Done():
-			return nil
-		case msg := <-subscription.Listen():
-			if err := stream.Send(msg); err != nil {
-				if err == io.EOF {
-					return nil
-				}
-				log.Err(err).Msg("sending message error")
-			}
-		}
-	}
+	return grpc.DefaultSubscribeOn[*storage.Metadata, *pb.SubscriptionMetadata](
+		stream,
+		server.metadataSubscriptions,
+		NewMetadataSubscription(),
+	)
 }
 
 // UnsubscribeFromMetadata -
-func (server *Server) UnsubscribeFromMetadata(ctx context.Context, req *generalPB.DefaultRequest) (*generalPB.Message, error) {
-	if err := server.metadataSubscriptions.Remove(req.Id); err != nil {
-		return nil, err
-	}
-
-	return &generalPB.Message{
-		Message: grpc.SuccessMessage,
-	}, nil
+func (server *Server) UnsubscribeFromMetadata(ctx context.Context, req *generalPB.UnsubscribeRequest) (*generalPB.UnsubscribeResponse, error) {
+	return grpc.DefaultUnsubscribe(ctx, server.metadataSubscriptions)
 }
 
 // GetMetadata -
 func (server *Server) GetMetadata(ctx context.Context, req *pb.GetMetadataRequest) (*pb.Metadata, error) {
-	if req == nil {
-		return nil, errors.New("invalid request")
-	}
-
 	reqCtx, cancel := context.WithTimeout(ctx, time.Second*10)
 	defer cancel()
 

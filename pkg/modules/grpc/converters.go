@@ -15,11 +15,19 @@ func Metadata(metadata *storage.Metadata) *pb.Metadata {
 	}
 }
 
+// SubscriptionMetadata -
+func SubscriptionMetadata(id uint64, metadata *storage.Metadata) *pb.SubscriptionMetadata {
+	return &pb.SubscriptionMetadata{
+		Subscription: &generalPB.SubscribeResponse{
+			Id: id,
+		},
+		Metadata: Metadata(metadata),
+	}
+}
+
 // HeadRequest -
-func MetadataRequest(id string) *generalPB.DefaultRequest {
-	request := new(generalPB.DefaultRequest)
-	request.Id = id
-	return request
+func MetadataRequest() *generalPB.DefaultRequest {
+	return new(generalPB.DefaultRequest)
 }
 
 // ListMetadataResponse -

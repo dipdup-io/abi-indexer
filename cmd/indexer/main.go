@@ -67,7 +67,7 @@ func main() {
 		return
 	}
 
-	metadataIndexer.Subscribe(grpcModule.Subscriber, metadata.TopicMetadata)
+	metadataIndexer.Subscribe(grpcModule.Subscriber)
 
 	metadataIndexer.Start(ctx)
 	grpcModule.Start(ctx)
