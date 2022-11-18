@@ -91,7 +91,7 @@ func (server *Server) SubscribeOnMetadata(req *generalPB.DefaultRequest, stream 
 
 // UnsubscribeFromMetadata -
 func (server *Server) UnsubscribeFromMetadata(ctx context.Context, req *generalPB.UnsubscribeRequest) (*generalPB.UnsubscribeResponse, error) {
-	return grpc.DefaultUnsubscribe(ctx, server.metadataSubscriptions)
+	return grpc.DefaultUnsubscribe(ctx, server.metadataSubscriptions, req.Id)
 }
 
 // GetMetadata -
