@@ -54,7 +54,7 @@ func (m *Metadata) GetByTopic(ctx context.Context, topic string, limit, offset u
 	var events []*models.Event
 	query := m.DB().ModelContext(ctx, &events).
 		Relation("Metadata").
-		Where("topic = ?", topic).
+		Where("signature_id = ?", topic).
 		Where("metadata_id is not null")
 
 	postgres.Pagination(query, limit, offset, order)
