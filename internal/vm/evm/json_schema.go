@@ -2,6 +2,7 @@ package evm
 
 import (
 	"bytes"
+	"encoding/hex"
 	stdJSON "encoding/json"
 	"fmt"
 
@@ -12,12 +13,6 @@ import (
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
-
-type types struct {
-	Type    string         `json:"type"`
-	Inputs  *js.JSONSchema `json:"inputs,omitempty"`
-	Outputs *js.JSONSchema `json:"outputs,omitempty"`
-}
 
 // JSONSchema -
 func (vm *VirtualMachine) JSONSchema() ([]byte, error) {
@@ -39,17 +34,18 @@ func (vm *VirtualMachine) JSONSchema() ([]byte, error) {
 	return buf.Bytes(), err
 }
 
-func (vm *VirtualMachine) createEntrypointsSchema() (map[string]types, error) {
-	result := make(map[string]types)
+func (vm *VirtualMachine) createEntrypointsSchema() (map[string]js.Type, error) {
+	result := make(map[string]js.Type)
 
 	for _, event := range vm.contractABI.Events {
 		var (
-			typ = types{
+			typ = js.Type{
 				Type: "event",
 				Inputs: &js.JSONSchema{
 					Schema: js.Draft201909,
 					Type:   js.ItemTypeObject,
 				},
+				Signature: event.ID.Hex(),
 			}
 		)
 
@@ -65,9 +61,8 @@ func (vm *VirtualMachine) createEntrypointsSchema() (map[string]types, error) {
 	}
 
 	for _, method := range vm.contractABI.Methods {
-
 		var (
-			typ = types{
+			typ = js.Type{
 				Type: "method",
 				Inputs: &js.JSONSchema{
 					Schema: js.Draft201909,
@@ -77,6 +72,7 @@ func (vm *VirtualMachine) createEntrypointsSchema() (map[string]types, error) {
 					Schema: js.Draft201909,
 					Type:   js.ItemTypeObject,
 				},
+				Signature: hex.EncodeToString(method.ID),
 			}
 		)
 

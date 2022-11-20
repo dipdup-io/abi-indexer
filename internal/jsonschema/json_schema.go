@@ -2,6 +2,14 @@ package jsonschema
 
 const Draft201909 = "http://json-schema.org/draft/2019-09/schema#"
 
+// Type -
+type Type struct {
+	Type      string      `json:"type"`
+	Inputs    *JSONSchema `json:"inputs,omitempty"`
+	Outputs   *JSONSchema `json:"outputs,omitempty"`
+	Signature string      `json:"signature"`
+}
+
 // JSONSchema -
 type JSONSchema struct {
 	Schema      string `json:"$schema,omitempty"`
