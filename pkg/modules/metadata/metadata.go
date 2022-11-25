@@ -7,21 +7,21 @@ import (
 	models "github.com/dipdup-net/abi-indexer/internal/storage"
 
 	"github.com/dipdup-net/abi-indexer/internal/vm"
-	"github.com/dipdup-net/indexer-sdk/pkg/messages"
+	"github.com/dipdup-net/indexer-sdk/pkg/modules"
 	"github.com/dipdup-net/indexer-sdk/pkg/storage"
 	"github.com/dipdup-net/workerpool"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
-// topics
+// output name
 var (
-	TopicMetadata messages.SubscriptionID = "metadata"
+	OutputMetadata = "metadata"
 )
 
 // Metadata -
 type Metadata struct {
-	publisher *messages.Publisher
+	output *modules.Output
 
 	repo         models.IMetadata
 	events       models.IEvent
@@ -61,7 +61,7 @@ func NewMetadata(
 		transactable: transactable,
 		source:       src,
 		vmType:       cfg.VM.Type,
-		publisher:    messages.NewPublisher(),
+		output:       modules.NewOutput(OutputMetadata),
 	}
 
 	metadata.pool = workerpool.NewTimedPool(
@@ -77,6 +77,34 @@ func NewMetadata(
 // Start -
 func (metadata *Metadata) Start(ctx context.Context) {
 	metadata.pool.Start(ctx)
+}
+
+// Name -
+func (metadata *Metadata) Name() string {
+	return "metadata_indexer"
+}
+
+// Input -
+func (metadata *Metadata) Input(name string) (*modules.Input, error) {
+	return nil, errors.Wrap(modules.ErrUnknownInput, name)
+}
+
+// Output -
+func (metadata *Metadata) Output(name string) (*modules.Output, error) {
+	if name != OutputMetadata {
+		return nil, errors.Wrap(modules.ErrUnknownOutput, name)
+	}
+	return metadata.output, nil
+}
+
+// AttachTo -
+func (metadata *Metadata) AttachTo(name string, input *modules.Input) error {
+	output, err := metadata.Output(name)
+	if err != nil {
+		return err
+	}
+	output.Attach(input)
+	return nil
 }
 
 func (metadata *Metadata) errorHandler(ctx context.Context, err error) {
@@ -140,7 +168,7 @@ func (metadata *Metadata) processData(ctx context.Context, address string) error
 		return err
 	}
 
-	metadata.publisher.Notify(messages.NewMessage(TopicMetadata, model))
+	metadata.output.Push(&model)
 
 	return nil
 }
@@ -197,14 +225,4 @@ func (metadata *Metadata) Close() error {
 	}
 
 	return nil
-}
-
-// Subscribe -
-func (metadata *Metadata) Subscribe(s *messages.Subscriber) {
-	metadata.publisher.Subscribe(s, TopicMetadata)
-}
-
-// Unsubscribe -
-func (metadata *Metadata) Unsubscribe(s *messages.Subscriber) {
-	metadata.publisher.Unsubscribe(s, TopicMetadata)
 }

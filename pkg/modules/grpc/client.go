@@ -2,13 +2,14 @@ package grpc
 
 import (
 	"context"
-	"errors"
 	"sync"
 
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb"
-	"github.com/dipdup-net/indexer-sdk/pkg/messages"
+	"github.com/dipdup-net/abi-indexer/pkg/modules/metadata"
+	"github.com/dipdup-net/indexer-sdk/pkg/modules"
 	grpcModules "github.com/dipdup-net/indexer-sdk/pkg/modules/grpc"
 	generalPB "github.com/dipdup-net/indexer-sdk/pkg/modules/grpc/pb"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
@@ -16,6 +17,7 @@ import (
 type Client struct {
 	*grpcModules.Client
 
+	output        *modules.Output
 	client        pb.MetadataServiceClient
 	subscriptions *Subscriptions
 	wg            *sync.WaitGroup
@@ -25,6 +27,7 @@ type Client struct {
 func NewClient(cfg *ClientConfig) *Client {
 	return &Client{
 		Client:        grpcModules.NewClient(cfg.ServerAddress),
+		output:        modules.NewOutput(metadata.OutputMetadata),
 		subscriptions: cfg.Subscriptions,
 		wg:            new(sync.WaitGroup),
 	}
@@ -35,8 +38,36 @@ func (client *Client) Start(ctx context.Context) {
 	client.client = pb.NewMetadataServiceClient(client.Connection())
 }
 
+// Name -
+func (client *Client) Name() string {
+	return "metadata_grpc_client"
+}
+
+// Input -
+func (client *Client) Input(name string) (*modules.Input, error) {
+	return nil, errors.Wrap(modules.ErrUnknownInput, name)
+}
+
+// Output -
+func (client *Client) Output(name string) (*modules.Output, error) {
+	if name != metadata.OutputMetadata {
+		return nil, errors.Wrap(modules.ErrUnknownOutput, name)
+	}
+	return client.output, nil
+}
+
+// AttachTo -
+func (client *Client) AttachTo(name string, input *modules.Input) error {
+	output, err := client.Output(name)
+	if err != nil {
+		return err
+	}
+	output.Attach(input)
+	return nil
+}
+
 // SubscribeOnMetadata -
-func (client *Client) SubscribeOnMetadata(ctx context.Context, s *messages.Subscriber) (messages.SubscriptionID, error) {
+func (client *Client) SubscribeOnMetadata(ctx context.Context) (uint64, error) {
 	if client.subscriptions != nil && !client.subscriptions.Metadata {
 		return 0, nil
 	}
@@ -47,38 +78,29 @@ func (client *Client) SubscribeOnMetadata(ctx context.Context, s *messages.Subsc
 	}
 
 	return grpcModules.Subscribe[*pb.SubscriptionMetadata](
-		client.Publisher(),
-		s,
 		stream,
 		client.handleNewMetadata,
 		client.wg,
 	)
 }
 
-func (client *Client) handleNewMetadata(ctx context.Context, data *pb.SubscriptionMetadata, id messages.SubscriptionID) error {
+func (client *Client) handleNewMetadata(ctx context.Context, data *pb.SubscriptionMetadata, id uint64) error {
 	log.Trace().Str("contract", data.Metadata.Address).Msg("new metadata")
-	client.Publisher().Notify(messages.NewMessage(id, data))
+	client.output.Push(data)
 	return nil
 }
 
 // UnsubscribeFromMetadata -
-func (client *Client) UnsubscribeFromMetadata(ctx context.Context, s *messages.Subscriber, id messages.SubscriptionID) error {
+func (client *Client) UnsubscribeFromMetadata(ctx context.Context, id uint64) error {
 	if client.subscriptions != nil && !client.subscriptions.Metadata {
 		return nil
 	}
-
-	subscriptionID, ok := id.(uint64)
-	if !ok {
-		return errors.New("invalid subscription id")
-	}
-
 	if _, err := client.client.UnsubscribeFromMetadata(ctx, &generalPB.UnsubscribeRequest{
-		Id: subscriptionID,
+		Id: id,
 	}); err != nil {
 		return err
 	}
 
-	client.Publisher().Unsubscribe(s, id)
 	return nil
 }
 

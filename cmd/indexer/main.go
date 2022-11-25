@@ -8,28 +8,41 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/cobra"
 
 	"github.com/dipdup-net/abi-indexer/internal/storage/postgres"
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc"
 	"github.com/dipdup-net/abi-indexer/pkg/modules/metadata"
+	"github.com/dipdup-net/indexer-sdk/pkg/modules"
 
-	"github.com/dipdup-net/go-lib/cmdline"
 	"github.com/dipdup-net/go-lib/config"
 )
 
+var (
+	rootCmd = &cobra.Command{
+		Use:   "indexer",
+		Short: "DipDup indexer",
+	}
+)
+
 func main() {
+	configPath := rootCmd.PersistentFlags().StringP("config", "c", "dipdup.yml", "path to YAML config file")
+	if err := rootCmd.Execute(); err != nil {
+		log.Panic().Err(err).Msg("command line execute")
+		return
+	}
+	if err := rootCmd.MarkFlagRequired("config"); err != nil {
+		log.Panic().Err(err).Msg("config command line arg is required")
+		return
+	}
+
 	log.Logger = log.Output(zerolog.ConsoleWriter{
 		Out:        os.Stdout,
 		TimeFormat: "2006-01-02 15:04:05",
 	})
 
-	args := cmdline.Parse()
-	if args.Help {
-		return
-	}
-
 	var cfg Config
-	if err := config.Parse(args.Config, &cfg); err != nil {
+	if err := config.Parse(*configPath, &cfg); err != nil {
 		log.Panic().Err(err).Msg("parsing config file")
 		return
 	}
@@ -67,7 +80,11 @@ func main() {
 		return
 	}
 
-	metadataIndexer.Subscribe(grpcModule.Subscriber)
+	if err := modules.Connect(metadataIndexer, grpcModule, metadata.OutputMetadata, metadata.OutputMetadata); err != nil {
+		log.Panic().Err(err).Msg("connecting modules error")
+		cancel()
+		return
+	}
 
 	metadataIndexer.Start(ctx)
 	grpcModule.Start(ctx)

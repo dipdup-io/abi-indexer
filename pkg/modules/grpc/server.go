@@ -2,21 +2,24 @@ package grpc
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"time"
 
 	"github.com/dipdup-net/abi-indexer/internal/storage"
 	"github.com/dipdup-net/abi-indexer/pkg/modules/grpc/pb"
+	"github.com/dipdup-net/abi-indexer/pkg/modules/metadata"
+	"github.com/dipdup-net/indexer-sdk/pkg/modules"
 	"github.com/dipdup-net/indexer-sdk/pkg/modules/grpc"
 	generalPB "github.com/dipdup-net/indexer-sdk/pkg/modules/grpc/pb"
-	"github.com/rs/zerolog/log"
+	"github.com/pkg/errors"
 )
 
 // Server -
 type Server struct {
 	*grpc.Server
 	pb.UnimplementedMetadataServiceServer
+
+	input *modules.Input
 
 	metadata              storage.IMetadata
 	metadataSubscriptions *grpc.Subscriptions[*storage.Metadata, *pb.SubscriptionMetadata]
@@ -25,7 +28,10 @@ type Server struct {
 }
 
 // NewServer -
-func NewServer(cfg *grpc.ServerConfig, metadata storage.IMetadata) (*Server, error) {
+func NewServer(
+	cfg *grpc.ServerConfig,
+	metadataRepo storage.IMetadata,
+) (*Server, error) {
 	if cfg == nil {
 		return nil, errors.New("configuration structure of gRPC server is nil")
 	}
@@ -37,10 +43,34 @@ func NewServer(cfg *grpc.ServerConfig, metadata storage.IMetadata) (*Server, err
 
 	return &Server{
 		Server:                server,
-		metadata:              metadata,
+		input:                 modules.NewInput(metadata.OutputMetadata),
 		metadataSubscriptions: grpc.NewSubscriptions[*storage.Metadata, *pb.SubscriptionMetadata](),
+		metadata:              metadataRepo,
 		wg:                    new(sync.WaitGroup),
 	}, nil
+}
+
+// Name -
+func (server *Server) Name() string {
+	return "metadata_grpc_server"
+}
+
+// Input -
+func (server *Server) Input(name string) (*modules.Input, error) {
+	if name != metadata.OutputMetadata {
+		return nil, errors.Wrap(modules.ErrUnknownInput, name)
+	}
+	return server.input, nil
+}
+
+// Output -
+func (server *Server) Output(name string) (*modules.Output, error) {
+	return nil, errors.Wrap(modules.ErrUnknownOutput, name)
+}
+
+// AttachTo -
+func (server *Server) AttachTo(name string, input *modules.Input) error {
+	return errors.Wrap(modules.ErrUnknownOutput, name)
 }
 
 // Start -
@@ -60,19 +90,24 @@ func (server *Server) listen(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case msg := <-server.Listen():
-			switch typedMsg := msg.Data().(type) {
-			case storage.Metadata:
-				server.metadataSubscriptions.NotifyAll(&typedMsg, SubscriptionMetadata)
-			default:
-				log.Warn().Msgf("unknown message type: %T", typedMsg)
+		case msg, ok := <-server.input.Listen():
+			if !ok {
+				return
 			}
+			model, ok := msg.(storage.Metadata)
+			if !ok {
+				continue
+			}
+			server.metadataSubscriptions.NotifyAll(&model, SubscriptionMetadata)
 		}
 	}
 }
 
 // Close -
 func (server *Server) Close() error {
+	if err := server.input.Close(); err != nil {
+		return err
+	}
 	return server.Server.Close()
 }
 
