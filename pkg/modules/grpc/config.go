@@ -4,7 +4,7 @@ import "github.com/dipdup-net/indexer-sdk/pkg/modules/grpc"
 
 // ClientConfig -
 type ClientConfig struct {
-	ServerAddress string         `yaml:"server_address" validate:"required,hostname_port"`
+	ServerAddress string         `yaml:"server_address" validate:"required"`
 	Subscriptions *Subscriptions `yaml:"subscriptions" validate:"omitempty"`
 }
 
