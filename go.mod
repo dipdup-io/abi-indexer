@@ -3,8 +3,8 @@ module github.com/dipdup-net/abi-indexer
 go 1.19
 
 require (
-	github.com/dipdup-net/go-lib v0.2.23
-	github.com/dipdup-net/indexer-sdk v0.0.0-20221125133950-b15060291de5
+	github.com/dipdup-net/go-lib v0.2.25
+	github.com/dipdup-net/indexer-sdk v0.0.0-20221201160238-11780671c1f6
 	github.com/dipdup-net/sourcify-api v0.0.2
 	github.com/dipdup-net/workerpool v0.0.1
 	github.com/ethereum/go-ethereum v1.10.26
@@ -13,14 +13,12 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.28.0
 	github.com/spf13/cobra v1.6.1
-	github.com/stretchr/testify v1.8.1
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1
 )
 
 require (
 	github.com/btcsuite/btcd/btcec/v2 v2.2.0 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/go-pg/zerochecker v0.2.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
@@ -45,7 +43,6 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.9 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/vmihailenco/bufpool v0.1.11 // indirect

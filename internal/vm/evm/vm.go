@@ -2,11 +2,19 @@ package evm
 
 import (
 	"github.com/dipdup-net/abi-indexer/internal/storage"
+	"github.com/dipdup-net/indexer-sdk/pkg/contract"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+
+	jsoniter "github.com/json-iterator/go"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // VirtualMachine -
 type VirtualMachine struct {
+	*contract.EVM
+
+	raw         []byte
 	contractABI *abi.ABI
 }
 
@@ -18,8 +26,14 @@ func NewVM(data []byte) (*VirtualMachine, error) {
 	}
 
 	return &VirtualMachine{
+		raw:         data,
 		contractABI: &contractABI,
 	}, nil
+}
+
+// JSONSchema -
+func (vm *VirtualMachine) JSONSchema() ([]byte, error) {
+	return vm.EVM.JSONSchema(vm.raw)
 }
 
 // Methods -
