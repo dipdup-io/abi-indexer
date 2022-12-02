@@ -121,6 +121,7 @@ func (server *Server) SubscribeOnMetadata(req *generalPB.DefaultRequest, stream 
 		stream,
 		server.metadataSubscriptions,
 		NewMetadataSubscription(),
+		nil,
 	)
 }
 

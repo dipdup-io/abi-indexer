@@ -26,6 +26,8 @@ github.com/dipdup-net/go-lib v0.2.25 h1:jCtVZuPf8Z57kNbO8D6Wvuig2rVN0oVmCZZ+CswJ
 github.com/dipdup-net/go-lib v0.2.25/go.mod h1:RCYx6FV8+7qQkC1dCP8zn8WTlsFRXXx/D4N+2mw1GJg=
 github.com/dipdup-net/indexer-sdk v0.0.0-20221201160238-11780671c1f6 h1:gsw7TG/4CuizynUz5yDprCp5GLCaexV++bJUmNvkbPU=
 github.com/dipdup-net/indexer-sdk v0.0.0-20221201160238-11780671c1f6/go.mod h1:PSQx36IL8jgyNt2s7bbzUbB2AEqDOFU2otpziFa8iZY=
+github.com/dipdup-net/indexer-sdk v0.0.0-20221202153457-a3674e79ab3b h1:vueoi/GnL2AkJpb4jqBNq04AU1Q7gNKCRKbSlZaTVpY=
+github.com/dipdup-net/indexer-sdk v0.0.0-20221202153457-a3674e79ab3b/go.mod h1:QBxAsSIVMOFEgH1G5s3RRnrcydNaiBFRkVD2mfAQN8c=
 github.com/dipdup-net/sourcify-api v0.0.2 h1:OXyWmtg/Kxxi1ekrbPZ3X80H8gQapdylHk7xT+R861k=
 github.com/dipdup-net/sourcify-api v0.0.2/go.mod h1:xsnXeL+qKfDfHya8tV8pGyI+3evH7cFGjE1q0mdkEM8=
 github.com/dipdup-net/workerpool v0.0.1 h1:Ixx1y3MxFrRAjcw29vxpoTFwbgs7XhA+wGWH9HVtePo=
